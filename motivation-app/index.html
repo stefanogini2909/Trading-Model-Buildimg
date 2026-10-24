@@ -208,7 +208,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 .timer { font: 400 64px/1 var(--serif); font-variant-numeric: tabular-nums; text-align: center; color: var(--accent); }
 
 .fs { position: fixed; inset: 0; z-index: 60; background: #000; }
-.fs img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-touch-callout: default; user-select: auto; }
+.fs img, .fs canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fs img { -webkit-touch-callout: default; user-select: auto; }
 .fs .fs-hint {
   position: absolute; left: 50%; transform: translateX(-50%);
   bottom: calc(28px + env(safe-area-inset-bottom, 0px));
@@ -288,14 +289,16 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
         <button class="btn primary" id="btnNewWp" type="button">Nuovo sfondo</button>
         <button class="btn" id="btnFull" type="button">Schermo intero</button>
         <button class="btn" id="btnSave" type="button" hidden>Salva o condividi</button>
+        <button class="btn" id="btnVideo" type="button" hidden>Registra video di 8 secondi</button>
       </div>
       <p class="hint" id="saveHint">Per salvarlo apri "Schermo intero" e tieni premuto sull'immagine, oppure fai uno screenshot quando i suggerimenti spariscono.</p>
     </div>
 
     <div class="group"><span class="label">Frasi</span><div class="chips" id="srcChips"></div></div>
-    <div class="group"><span class="label">Stile</span><div class="chips" id="styleChips"></div></div>
+    <div class="group"><span class="label">Atmosfera</span><div class="chips" id="styleChips"></div></div>
     <div class="group"><span class="label">Colori</span><div class="chips" id="palChips"></div></div>
     <div class="group">
+      <label class="toggle"><input type="checkbox" id="optAnim" checked><span>Animazione a schermo intero</span></label>
       <label class="toggle"><input type="checkbox" id="optWhy" checked><span>Aggiungi il mio perché sotto la frase</span></label>
       <label class="toggle"><input type="checkbox" id="optStreak" checked><span>Mostra i giorni di disciplina</span></label>
     </div>
@@ -329,7 +332,17 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
           <li><b>Altri Android:</b> metti gli sfondi in una cartella e usa un'app di rotazione, per esempio Muzei con "Le mie foto".</li>
         </ul>
       </div>
+      <div class="group">
+        <span class="label">Sfondi animati</span>
+        <ul class="steps">
+          <li><b>Video pronti:</b> nella cartella <b>videos</b> dell'app ci sono sei animazioni da 8 secondi. Dall'app installata puoi registrarne una tua con "Registra video di 8 secondi".</li>
+          <li><b>Samsung:</b> Impostazioni, Sfondo e stile, Schermata di blocco, <b>Galleria</b>: scegli il video. Parte ogni volta che accendi lo schermo.</li>
+          <li><b>Altri Android:</b> usa un'app per video come sfondo animato, per esempio Video Live Wallpaper.</li>
+          <li><b>iPhone:</b> iOS non accetta video come sfondo. Trasformalo in Live Photo con un'app come intoLive, poi Impostazioni, Sfondo, Aggiungi nuovo sfondo, Foto: si anima quando risvegli il telefono.</li>
+        </ul>
+      </div>
     </div>
+    <p class="hint">Foto: NASA (pubblico dominio) e WordPress Photo Directory (CC0). La casa sotto la pioggia è disegnata dall'app.</p>
   </section>
 
   <!-- RITUALE -->
@@ -432,6 +445,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 <!-- Sfondo a schermo intero -->
 <div class="fs" id="fs" hidden>
   <img id="fsImg" alt="Sfondo motivazionale generato">
+  <canvas id="fsCanvas" width="1170" height="2532" hidden aria-label="Sfondo animato"></canvas>
   <button class="fs-close" id="fsClose" type="button">Chiudi</button>
   <div class="fs-hint" id="fsHint">Tieni premuto per salvare l'immagine, oppure aspetta che questo messaggio sparisca e fai uno screenshot.</div>
 </div>
@@ -536,9 +550,45 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     { id: "pietra", name: "Pietra", bg: "#e4e3de", fg: "#161514", accent: "#8a5a1e" }
   ];
   var STYLES = [
-    { id: "linea", name: "Linea" },
+    { id: "casa", name: "Casa sotto la pioggia" },
+    { id: "vetro", name: "Pioggia sul vetro" },
+    { id: "spazio", name: "Spazio" },
+    { id: "strada", name: "Auto sportive" },
+    { id: "misto", name: "Alterna" },
+    { id: "linea", name: "Grafico" },
     { id: "candele", name: "Candele" },
     { id: "testo", name: "Solo parole" }
+  ];
+  // frasi per tenere calma la mente, valide per qualsiasi giornata
+  var CALM = [
+    "Respira. Hai più tempo di quanto pensi.",
+    "Fai una cosa alla volta, e falla bene.",
+    "La calma è una competenza. Si allena.",
+    "Non tutto merita una tua reazione.",
+    "Lento è fluido. Fluido è veloce.",
+    "Sei più forte della giornata di oggi.",
+    "Il rumore passa. La direzione resta.",
+    "Proteggi la tua energia come proteggi il capitale.",
+    "Piccoli passi, ogni giorno, per anni.",
+    "Non devi sentirti pronto. Devi iniziare.",
+    "Quello che controlli è abbastanza.",
+    "Le tempeste finiscono. Tu resti.",
+    "Costruisci in silenzio.",
+    "Pensa solo al prossimo passo giusto.",
+    "Il te di domani ringrazia la costanza di oggi.",
+    "Mente calma, obiettivi in fiamme.",
+    "Non confrontare il tuo inizio con la metà strada di un altro.",
+    "La pazienza è fiducia nel processo.",
+    "Fai pace con il lento. Funziona.",
+    "Meno rumore, più lavoro.",
+    "Ogni giorno è una nuova sessione.",
+    "Gentile con te stesso, severo con le tue regole.",
+    "Una mente calma vede più lontano.",
+    "Conta quello che fai ogni giorno, non ogni tanto.",
+    "Il coraggio è restare quando sarebbe facile mollare.",
+    "Spegni il rumore. Ascolta il piano.",
+    "Va bene andare piano. Non va bene fermarsi.",
+    "Hai già superato giorni più difficili di questo."
   ];
 
   /* ---------- utilità ---------- */
@@ -570,7 +620,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var sessions = store.get("sessions", {});           // { "2026-10-24": true }
   var checks = store.get("checks", {});               // { day: [bool...] }
   var wins = store.get("wins", []);                   // [{d, t}]
-  var wpPrefs = Object.assign({ style: "candele", pal: "petrolio", why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
+  var wpPrefs = Object.assign({ style: "casa", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
   if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "linea";
   if (!PALETTES.some(function (x) { return x.id === wpPrefs.pal; })) wpPrefs.pal = "nero";
   var quoteOffset = 0;
@@ -588,7 +638,11 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     if (profile.rule) out.push({ text: profile.rule, label: "La mia regola" });
     return out;
   }
-  function useMine() { return wpPrefs.src === "mine" || (wpPrefs.src === "auto" && personalPhrases().length > 0); }
+  function sourceOf() {
+    var s = wpPrefs.src === "auto" ? (personalPhrases().length ? "mine" : "calm") : wpPrefs.src;
+    return s === "mine" && !personalPhrases().length ? "calm" : s;
+  }
+  function useMine() { return sourceOf() === "mine"; }
   function allQuotes() {
     var list = QUOTES.slice();
     if (profile.rule && profile.rule.trim()) list.push(profile.rule.trim());
@@ -666,7 +720,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   }
   function hexA(hex, a) { var n = Math.round(a * 255); return hex + (n < 16 ? "0" : "") + n.toString(16); }
 
-  function renderWallpaper(canvas, o) {
+  function renderChart(canvas, o) {
     var W = canvas.width, H = canvas.height, g = canvas.getContext("2d");
     var pal = PALETTES.filter(function (p) { return p.id === o.pal; })[0] || PALETTES[0];
     var r = rng(o.seed);
@@ -738,8 +792,222 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     }
   }
 
+  /* ---------- atmosfere: foto e scene animate ---------- */
+  var LOOP = 8; // secondi: ogni animazione si ripete senza stacchi
+  var SCENES = ["casa", "vetro", "spazio", "strada"];
+  var PHOTOS = {
+    vetro: ["photos/pioggia-vetro.jpg", "photos/pioggia-auto-notte.jpg", "photos/pioggia-finestrino.jpg"],
+    spazio: ["photos/astronauta-iss.jpg", "photos/stazione-alba.jpg", "photos/astronauta-casco.jpg"],
+    strada: ["photos/auto-gtr.jpg", "photos/auto-ferrari.jpg", "photos/auto-datsun.jpg"]
+  };
+  var imgCache = {};
+  function loadImg(src) {
+    if (imgCache[src]) return imgCache[src].p;
+    var img = new Image(), rec = { img: img, ok: false };
+    rec.p = new Promise(function (res) {
+      img.onload = function () { rec.ok = true; res(img); };
+      img.onerror = function () { res(null); };
+    });
+    imgCache[src] = rec; img.src = src;
+    return rec.p;
+  }
+  function sceneOf(o) { return o.style === "misto" ? SCENES[o.seed % SCENES.length] : o.style; }
+  function isScene(o) { return SCENES.indexOf(sceneOf(o)) >= 0; }
+  function photoOf(o) { var list = PHOTOS[sceneOf(o)]; return list ? list[Math.floor(o.seed / 7) % list.length] : null; }
+  function ensureAssets(o) { var p = photoOf(o); return p ? loadImg(p) : Promise.resolve(null); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function easeOut(v) { return 1 - Math.pow(1 - v, 3); }
+
+  function drawRain(g, x0, y0, w, h, seed, t, n, alpha) {
+    var r = rng(seed ^ 0x51ed);
+    g.save(); g.lineCap = "round"; g.strokeStyle = "rgba(214,226,240," + alpha + ")";
+    for (var i = 0; i < n; i++) {
+      var x = x0 + r() * w, len = 40 + r() * 90, k = 1 + Math.floor(r() * 3);
+      var y = y0 + (r() * h + k * h * t / LOOP) % h;
+      g.lineWidth = 1.5 + r() * 1.5; g.globalAlpha = 0.4 + r() * 0.6;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x - len * 0.12, y + len); g.stroke();
+    }
+    g.restore();
+  }
+  function drop(g, x, y, rad) {
+    g.fillStyle = "rgba(255,255,255,0.10)"; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+    g.fillStyle = "rgba(0,0,0,0.22)"; g.beginPath(); g.arc(x, y + rad * 0.2, rad * 0.85, 0, Math.PI); g.fill();
+    g.fillStyle = "rgba(255,255,255,0.55)"; g.beginPath(); g.arc(x - rad * 0.35, y - rad * 0.35, rad * 0.28, 0, 7); g.fill();
+  }
+  function drawDrops(g, w, h, seed, t) {
+    var r = rng(seed ^ 0xd209), i;
+    for (i = 0; i < 150; i++) drop(g, r() * w, r() * h, 3 + Math.pow(r(), 2) * 14);
+    // gocce che scivolano: ognuna attraversa il vetro una volta per ciclo
+    for (i = 0; i < 6; i++) {
+      var sx = r() * w, rad = 9 + r() * 8, off = r();
+      var yy = ((off + t / LOOP) % 1) * (h + 300) - 150, xx = sx + Math.sin(yy / 90) * 4;
+      g.strokeStyle = "rgba(255,255,255,0.10)"; g.lineWidth = rad * 0.7; g.lineCap = "round";
+      g.beginPath(); g.moveTo(sx, yy - 240); g.lineTo(xx, yy); g.stroke();
+      drop(g, xx, yy, rad);
+    }
+  }
+  function drawStars(g, W, H, seed, t) {
+    var r = rng(seed ^ 0x57a2), ph = 2 * Math.PI * t / LOOP;
+    g.save(); g.globalCompositeOperation = "lighter";
+    for (var i = 0; i < 240; i++) {
+      var x = r() * W, y = r() * H, s = 0.8 + r() * 2.6, m = 1 + Math.floor(r() * 3), p0 = r() * 6.28;
+      g.fillStyle = "rgba(255,255,255," + ((0.2 + 0.5 * r()) * (0.55 + 0.45 * Math.sin(ph * m + p0))).toFixed(3) + ")";
+      g.beginPath(); g.arc(x, y, s, 0, 7); g.fill();
+    }
+    // una stella cadente a ogni ciclo
+    var f = (t % LOOP) / LOOP;
+    if (f > 0.55 && f < 0.7) {
+      var q = (f - 0.55) / 0.15, sx = W * (0.92 - q * 0.6), sy = H * (0.06 + q * 0.14);
+      var gr = g.createLinearGradient(sx, sy, sx + 280, sy - 96);
+      gr.addColorStop(0, "rgba(255,255,255," + (0.9 * (1 - q)).toFixed(3) + ")"); gr.addColorStop(1, "rgba(255,255,255,0)");
+      g.strokeStyle = gr; g.lineWidth = 4; g.lineCap = "round";
+      g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + 280, sy - 96); g.stroke();
+    }
+    g.restore();
+  }
+  function drawSheen(g, W, H, t) {
+    var f = (t % LOOP) / LOOP;
+    if (f < 0.15 || f > 0.6) return;
+    var q = (f - 0.15) / 0.45;
+    g.save(); g.globalCompositeOperation = "lighter";
+    g.translate(-W * 0.6 + q * W * 2.2, 0); g.rotate(-0.35);
+    var gr = g.createLinearGradient(-170, 0, 170, 0);
+    gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.5, "rgba(255,255,255,0.10)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = gr; g.fillRect(-170, -H, 340, H * 3);
+    g.restore();
+  }
+  function drawHouse(g, W, H, seed, t) {
+    var r = rng(seed ^ 0x40c5), wy = Math.round(H * 0.6), i;
+    // fuori: notte, luci lontane sfocate, una fila di case con le finestre accese
+    var sk = g.createLinearGradient(0, 0, 0, wy);
+    sk.addColorStop(0, "#0c1118"); sk.addColorStop(1, "#243040");
+    g.fillStyle = sk; g.fillRect(0, 0, W, wy);
+    for (i = 0; i < 9; i++) {
+      var bx = r() * W, by = wy * (0.55 + r() * 0.35), br = 40 + r() * 90, warm = r() < 0.7;
+      var bg = g.createRadialGradient(bx, by, 0, bx, by, br);
+      bg.addColorStop(0, warm ? "rgba(240,180,100,0.35)" : "rgba(160,190,230,0.25)"); bg.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = bg; g.fillRect(bx - br, by - br, br * 2, br * 2);
+    }
+    var base = wy * 0.86, x = -30;
+    while (x < W) {
+      var bw = 150 + r() * 170, bh = 140 + r() * 220, top = base - bh, roof = 50 + r() * 60;
+      g.fillStyle = "#0a0e14";
+      g.beginPath(); g.moveTo(x - 8, top); g.lineTo(x + bw / 2, top - roof); g.lineTo(x + bw + 8, top); g.closePath(); g.fill();
+      g.fillRect(x, top, bw, wy - top);
+      var cols = 2 + Math.floor(r() * 2), rows = 1 + Math.floor(r() * 2);
+      for (var c = 0; c < cols; c++) for (var k = 0; k < rows; k++) {
+        if (r() < 0.72) {
+          g.save(); g.shadowColor = "rgba(244,190,110,0.8)"; g.shadowBlur = 36; g.fillStyle = "#f2bd6c";
+          g.fillRect(x + bw * (0.18 + c * (0.64 / (cols - 1))) - 16, top + 34 + k * 70, 32, 40); g.restore();
+        }
+      }
+      x += bw + 14 + r() * 40;
+    }
+    g.fillStyle = "#080b10"; g.fillRect(0, base, W, wy - base);
+    // la pioggia fuori e le gocce sul vetro, solo dentro la finestra
+    g.save(); g.beginPath(); g.rect(0, 0, W, wy); g.clip();
+    drawRain(g, 0, 0, W, wy, seed, t, 260, 0.36);
+    drawDrops(g, W, wy, seed, t);
+    g.restore();
+    // telaio, davanzale e muro della stanza
+    g.fillStyle = "#0b0908";
+    g.fillRect(0, 0, 40, wy); g.fillRect(W - 40, 0, 40, wy); g.fillRect(W / 2 - 17, 0, 34, wy); g.fillRect(0, wy * 0.46 - 15, W, 30);
+    g.fillStyle = "#1d1712"; g.fillRect(0, wy, W, 44);
+    g.fillStyle = "#2b221a"; g.fillRect(0, wy, W, 4);
+    g.fillStyle = "#0f0d0b"; g.fillRect(0, wy + 44, W, H - wy - 44);
+    var lamp = g.createRadialGradient(W * 0.88, H * 0.98, 0, W * 0.88, H * 0.98, H * 0.45);
+    lamp.addColorStop(0, "rgba(240,176,96,0.16)"); lamp.addColorStop(1, "rgba(240,176,96,0)");
+    g.fillStyle = lamp; g.fillRect(0, wy, W, H - wy);
+    // una tazza che fuma sul davanzale
+    var mx = W * 0.72;
+    g.fillStyle = "#2a2119"; g.fillRect(mx, wy - 112, 100, 112);
+    g.fillStyle = "#3a2e23"; g.fillRect(mx, wy - 112, 100, 6);
+    g.strokeStyle = "#2a2119"; g.lineWidth = 14; g.beginPath(); g.arc(mx + 104, wy - 58, 26, -1.3, 1.3); g.stroke();
+    g.save(); g.strokeStyle = "rgba(255,255,255,0.10)"; g.lineWidth = 6; g.lineCap = "round";
+    for (var j = 0; j < 3; j++) {
+      g.beginPath();
+      for (var s = 0; s <= 40; s++) {
+        var yy = wy - 124 - s * 7, xx = mx + 30 + j * 20 + Math.sin(s / 6 + 2 * Math.PI * (2 * t / LOOP + j / 3)) * 14 * (s / 40);
+        if (s) g.lineTo(xx, yy); else g.moveTo(xx, yy);
+      }
+      g.stroke();
+    }
+    g.restore();
+  }
+  function drawSceneText(g, W, H, o, t) {
+    var pal = PALETTES.filter(function (p) { return p.id === o.pal; })[0] || PALETTES[0];
+    var acc = pal.id === "pietra" ? "#d4a95c" : pal.accent, ink = "#f5f2ec";
+    var X = 104, maxW = W - X * 2, a = 1, rise = 0;
+    if (o.intro) { var q = easeOut(clamp01((t - 0.3) / 1.4)); a = q; rise = (1 - q) * 40; }
+    if (o.outro) a *= clamp01((LOOP - t) / 0.7);
+    var size = 100, lines;
+    do {
+      g.font = "400 " + size + "px 'Instrument Serif', Georgia, serif";
+      lines = wrapLines(g, o.quote, maxW); size -= 4;
+    } while (lines.length * size * 1.08 > H * 0.17 && size > 64);
+    size += 4;
+    var lh = size * 1.08, whyLines = [];
+    if (o.why && o.whyText) {
+      g.font = "italic 400 50px 'Instrument Serif', Georgia, serif";
+      whyLines = wrapLines(g, o.whyText, maxW).slice(0, 2);
+    }
+    var total = 38 + 28 + lines.length * lh + (whyLines.length ? 24 + whyLines.length * 60 : 0);
+    var top = H * 0.85 - total, from = top - H * 0.16;
+    // velo scuro sotto il testo: la frase resta leggibile su qualsiasi foto
+    var sc = g.createLinearGradient(0, from, 0, H);
+    sc.addColorStop(0, "rgba(0,0,0,0)"); sc.addColorStop(0.45, "rgba(0,0,0,0.55)"); sc.addColorStop(1, "rgba(0,0,0,0.8)");
+    g.fillStyle = sc; g.fillRect(0, from, W, H - from);
+
+    var d = o.date === undefined ? new Date() : o.date;
+    var label = (o.label || "Regola del giorno") + (d ? ", " + d.getDate() + " " + MONTHS_LONG[d.getMonth()] : "");
+    g.save(); g.globalAlpha = a; g.translate(0, rise); g.textBaseline = "alphabetic";
+    g.font = "500 38px 'Instrument Sans', system-ui, sans-serif"; g.fillStyle = acc;
+    g.fillText(label, X, top + 38);
+    var y = top + 38 + 28 + size * 0.92;
+    g.font = "400 " + size + "px 'Instrument Serif', Georgia, serif"; g.fillStyle = ink;
+    lines.forEach(function (ln) { g.fillText(ln, X, y); y += lh; });
+    if (whyLines.length) {
+      y += 24 - lh + 60;
+      g.font = "italic 400 50px 'Instrument Serif', Georgia, serif"; g.fillStyle = "rgba(245,242,236,0.72)";
+      whyLines.forEach(function (ln, i) { g.fillText(ln, X, y + i * 60); });
+    }
+    if (o.streak && o.streakN > 0) {
+      g.font = "500 36px 'Instrument Sans', system-ui, sans-serif"; g.fillStyle = "rgba(245,242,236,0.66)";
+      g.fillText(o.streakN + (o.streakN === 1 ? " giorno" : " giorni") + " di disciplina di fila", X, H * 0.895);
+    }
+    g.restore();
+  }
+  // t = secondi dentro il ciclo; senza t è un fermo immagine con il testo già entrato
+  function renderWallpaper(canvas, o, t) {
+    if (!isScene(o)) return renderChart(canvas, o);
+    var W = canvas.width, H = canvas.height, g = canvas.getContext("2d"), sc = sceneOf(o);
+    if (t == null) t = LOOP * 0.4;
+    g.save();
+    if ("letterSpacing" in g) g.letterSpacing = "0px";
+    if (sc === "casa") drawHouse(g, W, H, o.seed, t);
+    else {
+      g.fillStyle = "#0b0b0b"; g.fillRect(0, 0, W, H);
+      var rec = imgCache[photoOf(o)];
+      if (rec && rec.ok) {
+        var z = 1.045 + 0.03 * Math.sin(2 * Math.PI * t / LOOP), w = W * z, h = H * z;
+        g.drawImage(rec.img, (W - w) / 2, (H - h) / 2, w, h);
+      }
+      g.fillStyle = "rgba(0,0,0,0.16)"; g.fillRect(0, 0, W, H);
+      var tg = g.createLinearGradient(0, 0, 0, H * 0.32); // l'orologio del blocco schermo resta leggibile
+      tg.addColorStop(0, "rgba(0,0,0,0.45)"); tg.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = tg; g.fillRect(0, 0, W, H * 0.32);
+      if (sc === "vetro") { drawRain(g, 0, 0, W, H, o.seed, t, 90, 0.12); drawDrops(g, W, H, o.seed, t); }
+      if (sc === "spazio") drawStars(g, W, H, o.seed, t);
+      if (sc === "strada") drawSheen(g, W, H, t);
+    }
+    g.restore();
+    drawSceneText(g, W, H, o, t);
+  }
+
   function pickPhrase() {
-    if (useMine()) { var mine = personalPhrases(); return mine[Math.floor(Math.random() * mine.length)]; }
+    var s = sourceOf();
+    if (s === "mine") { var mine = personalPhrases(); return mine[Math.floor(Math.random() * mine.length)]; }
+    if (s === "calm") return { text: CALM[Math.floor(Math.random() * CALM.length)], label: "Mente calma" };
     var list = allQuotes(); return { text: list[Math.floor(Math.random() * list.length)] };
   }
   function wpOptions(ph, seed) {
@@ -751,10 +1019,14 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     };
   }
   function currentWpOptions() {
-    if (!wpQuote) wpQuote = useMine() ? pickPhrase() : { text: quoteFor(new Date(), quoteOffset) };
+    if (!wpQuote) wpQuote = sourceOf() === "trade" ? { text: quoteFor(new Date(), quoteOffset) } : pickPhrase();
     return wpOptions(wpQuote, wpSeed);
   }
-  function drawWp() { renderWallpaper($("wpCanvas"), currentWpOptions()); }
+  function drawWp() {
+    var o = currentWpOptions();
+    renderWallpaper($("wpCanvas"), o);
+    ensureAssets(o).then(function () { if (o.seed === wpSeed) renderWallpaper($("wpCanvas"), currentWpOptions()); });
+  }
   function newWp() {
     wpSeed = (Math.random() * 4294967296) >>> 0;
     wpQuote = pickPhrase();
@@ -763,9 +1035,9 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 
   function buildChips() {
     var src = $("srcChips"); src.innerHTML = "";
-    [["mine", "Le mie (chi sono, cosa voglio)"], ["trade", "Regole del mestiere"]].forEach(function (o) {
+    [["mine", "Le mie"], ["calm", "Mente calma"], ["trade", "Trading"]].forEach(function (o) {
       var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = o[1];
-      b.setAttribute("aria-pressed", String(useMine() === (o[0] === "mine")));
+      b.setAttribute("aria-pressed", String(sourceOf() === o[0]));
       b.onclick = function () {
         if (o[0] === "mine" && !personalPhrases().length) { toast("Prima scrivi chi sei nella sezione Chi sono"); showTab("perche"); return; }
         wpPrefs.src = o[0]; store.set("wp", wpPrefs); buildChips(); newWp();
@@ -776,7 +1048,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     STYLES.forEach(function (s) {
       var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = s.name;
       b.setAttribute("aria-pressed", String(wpPrefs.style === s.id));
-      b.onclick = function () { wpPrefs.style = s.id; store.set("wp", wpPrefs); buildChips(); drawWp(); };
+      b.onclick = function () { wpPrefs.style = s.id; store.set("wp", wpPrefs); buildChips(); newWp(); };
       sc.appendChild(b);
     });
     var pc = $("palChips"); pc.innerHTML = "";
@@ -792,19 +1064,43 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 
   /* schermo intero + rotazione */
   var inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
-  var rotTimer = null, hintTimer = null, wakeLock = null;
+  var rotTimer = null, hintTimer = null, wakeLock = null, liveRaf = null, liveStart = 0, liveLast = 0;
+  var reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  function startLive() {
+    var c = $("fsCanvas");
+    liveStart = performance.now(); liveLast = 0;
+    cancelAnimationFrame(liveRaf);
+    function frame(now) {
+      liveRaf = requestAnimationFrame(frame);
+      if (now - liveLast < 33) return; // 30 fotogrammi al secondo bastano e risparmiano batteria
+      liveLast = now;
+      var o = currentWpOptions();
+      if (reduceMotion) { renderWallpaper(c, o); return; }
+      o.intro = true;
+      renderWallpaper(c, o, (now - liveStart) / 1000);
+    }
+    liveRaf = requestAnimationFrame(frame);
+  }
   function showFs(url) {
-    var fs = $("fs");
-    $("fsImg").src = typeof url === "string" ? url : $("wpCanvas").toDataURL("image/png");
+    var fs = $("fs"), still = typeof url === "string" || !wpPrefs.anim || !isScene(currentWpOptions());
+    $("fsImg").hidden = !still; $("fsCanvas").hidden = still;
+    $("fsHint").textContent = still
+      ? "Tieni premuto per salvare l'immagine, oppure aspetta che questo messaggio sparisca e fai uno screenshot."
+      : "Anteprima animata. Per averla sul blocco schermo usa i video: trovi come più in basso, in Sfondi animati.";
+    if (still) $("fsImg").src = typeof url === "string" ? url : $("wpCanvas").toDataURL("image/jpeg", 0.92);
+    else startLive();
     fs.hidden = false; fs.classList.remove("clean");
     clearTimeout(hintTimer); hintTimer = setTimeout(function () { fs.classList.add("clean"); }, 3500);
     var sec = parseInt(wpPrefs.rotate, 10) || 0;
     clearInterval(rotTimer);
-    if (sec && typeof url !== "string") rotTimer = setInterval(function () { newWp(); $("fsImg").src = $("wpCanvas").toDataURL("image/png"); }, sec * 1000);
+    if (sec && typeof url !== "string") rotTimer = setInterval(function () {
+      newWp();
+      if (still) $("fsImg").src = $("wpCanvas").toDataURL("image/jpeg", 0.92); else liveStart = performance.now();
+    }, sec * 1000);
     try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { wakeLock = l; }, function () {}); } catch (e) {}
   }
   function hideFs() {
-    $("fs").hidden = true; clearInterval(rotTimer); clearTimeout(hintTimer);
+    $("fs").hidden = true; clearInterval(rotTimer); clearTimeout(hintTimer); cancelAnimationFrame(liveRaf);
     try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {}
   }
   function saveWp() {
@@ -826,26 +1122,73 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     }, "image/png");
   }
 
+  function shareOrDownload(blob, name, okMsg) {
+    var file = null;
+    try { file = new File([blob], name, { type: blob.type }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Edge" }).catch(function () {});
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    toast(okMsg);
+  }
+  // registra un video di un ciclo completo, con il testo che entra ed esce: pronto per il blocco schermo
+  function recordVideo() {
+    var o = currentWpOptions(), btn = $("btnVideo"), label = btn.textContent;
+    if (!isScene(o)) { toast("Scegli un'atmosfera: casa, pioggia, spazio o auto"); return; }
+    var c = document.createElement("canvas"); c.width = 1170; c.height = 2532;
+    var type = window.MediaRecorder && c.captureStream ? ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].filter(function (m) { return MediaRecorder.isTypeSupported(m); })[0] : null;
+    if (!type) { toast("Questo browser non sa registrare video. Usa i video pronti della cartella videos."); return; }
+    btn.disabled = true; btn.textContent = "Preparo…";
+    ensureAssets(o).then(function () {
+      var rec = new MediaRecorder(c.captureStream(30), { mimeType: type, videoBitsPerSecond: 8000000 }), chunks = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function () {
+        btn.disabled = false; btn.textContent = label;
+        shareOrDownload(new Blob(chunks, { type: type.split(";")[0] }), "edge-animato." + (type.indexOf("mp4") >= 0 ? "mp4" : "webm"), "Video salvato");
+      };
+      o.intro = true; o.outro = true;
+      renderWallpaper(c, o, 0); rec.start(); btn.textContent = "Registrazione…";
+      var t0 = performance.now();
+      (function step() {
+        var t = (performance.now() - t0) / 1000;
+        if (t >= LOOP) { rec.stop(); return; }
+        renderWallpaper(c, o, t); requestAnimationFrame(step);
+      })();
+    });
+  }
+
   /* ---------- pacchetto blocco schermo ---------- */
   var packUrls = [];
   function buildPack() {
     var mine = personalPhrases();
     if (!mine.length) { toast("Prima scrivi chi sei nella sezione Chi sono"); showTab("perche"); return; }
-    // tutte le frasi personali, completate con regole del mestiere fino a 10 sfondi
-    var list = mine.slice(0, 14), q = allQuotes(), k = 0;
-    while (list.length < 10) list.push({ text: q[(dayNumber(new Date()) + k++ * 5) % q.length] });
-    var c = document.createElement("canvas"); c.width = 1170; c.height = 2532;
-    var gal = $("gallery"); gal.innerHTML = ""; packUrls = [];
-    list.forEach(function (ph, i) {
-      renderWallpaper(c, wpOptions(ph, (Math.random() * 4294967296) >>> 0));
-      var url = c.toDataURL("image/jpeg", 0.9); packUrls.push(url);
-      var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Apri sfondo " + (i + 1));
-      var img = document.createElement("img"); img.src = url; img.alt = ph.text;
-      b.appendChild(img); b.onclick = function () { showFs(url); }; gal.appendChild(b);
+    // tutte le frasi personali, completate fino a 10 sfondi alternando mente calma e mestiere
+    var list = mine.slice(0, 14), q = allQuotes(), k = 0, n0 = dayNumber(new Date());
+    while (list.length < 10) {
+      list.push(k % 2 ? { text: q[(n0 + k * 5) % q.length] } : { text: CALM[(n0 + k * 3) % CALM.length], label: "Mente calma" });
+      k++;
+    }
+    var opts = list.map(function (ph, i) { return wpOptions(ph, ((Math.random() * 4294967296) >>> 0) + i); });
+    $("btnPack").disabled = true;
+    Promise.all(opts.map(ensureAssets)).then(function () {
+      var c = document.createElement("canvas"); c.width = 1170; c.height = 2532;
+      var gal = $("gallery"); gal.innerHTML = ""; packUrls = [];
+      opts.forEach(function (o, i) {
+        renderWallpaper(c, o);
+        var url = c.toDataURL("image/jpeg", 0.9); packUrls.push(url);
+        var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Apri sfondo " + (i + 1));
+        var img = document.createElement("img"); img.src = url; img.alt = o.quote;
+        b.appendChild(img); b.onclick = function () { showFs(url); }; gal.appendChild(b);
+      });
+      $("btnPack").disabled = false;
+      $("packHint").hidden = false;
+      $("btnPackSave").hidden = inFrame;
+      toast(list.length + " sfondi pronti");
     });
-    $("packHint").hidden = false;
-    $("btnPackSave").hidden = inFrame;
-    toast(list.length + " sfondi pronti");
   }
   function savePack() {
     var files = packUrls.map(function (u, i) {
@@ -1025,6 +1368,11 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     $("btnSave").hidden = inFrame;
     if (!inFrame) $("saveHint").textContent = "“Salva o condividi” apre il menu del telefono: scegli “Usa come sfondo” o “Salva immagine”.";
     $("btnSave").onclick = saveWp;
+    $("btnVideo").hidden = inFrame;
+    $("btnVideo").onclick = recordVideo;
+    $("fsCanvas").onclick = function () { $("fs").classList.toggle("clean"); };
+    $("optAnim").checked = wpPrefs.anim !== false;
+    $("optAnim").onchange = function () { wpPrefs.anim = this.checked; store.set("wp", wpPrefs); };
     $("optWhy").checked = wpPrefs.why; $("optStreak").checked = wpPrefs.streak; $("optRotate").value = wpPrefs.rotate;
     $("optWhy").onchange = function () { wpPrefs.why = this.checked; store.set("wp", wpPrefs); drawWp(); };
     $("optStreak").onchange = function () { wpPrefs.streak = this.checked; store.set("wp", wpPrefs); drawWp(); };
@@ -1062,11 +1410,13 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   }
 
   // usato anche dallo script che genera il pacchetto di sfondi
+  var exportCanvas = null;
   window.EdgeApp = {
-    QUOTES: QUOTES, PALETTES: PALETTES, STYLES: STYLES,
-    render: function (o) {
-      var c = document.createElement("canvas"); c.width = o.w || 1170; c.height = o.h || 2532;
-      renderWallpaper(c, o); return c.toDataURL("image/jpeg", 0.9);
+    QUOTES: QUOTES, CALM: CALM, PALETTES: PALETTES, STYLES: STYLES, LOOP: LOOP,
+    ready: function (o) { return ensureAssets(o); },
+    render: function (o, t) {
+      if (!exportCanvas) { exportCanvas = document.createElement("canvas"); exportCanvas.width = 1170; exportCanvas.height = 2532; }
+      renderWallpaper(exportCanvas, o, t); return exportCanvas.toDataURL("image/jpeg", 0.9);
     }
   };
 
