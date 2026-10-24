@@ -110,8 +110,28 @@ button { cursor: pointer; }
 .stat .n { font: 800 44px/1 var(--display); font-variant-numeric: tabular-nums; }
 .stat .n small { font: 500 13px var(--mono); color: var(--muted); margin-left: 4px; }
 
-.why-card { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; display: flex; flex-direction: column; gap: 4px; }
-.why-card p { margin: 0; font-style: italic; color: var(--fg); }
+.me-card {
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 16px; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+}
+.me-card .id { margin: 0; font: 800 26px/1.08 var(--display); text-wrap: balance; }
+.me-card .kv { display: flex; flex-direction: column; gap: 4px; }
+.me-card .kv p { margin: 0; color: color-mix(in srgb, var(--fg) 85%, transparent); }
+.me-card .kv p.why { font-style: italic; }
+.chip.pick { text-align: left; padding: 10px 14px; border-radius: 12px; font-size: 14px; }
+.chip.pick[aria-pressed="true"]::before { content: "✓"; color: var(--accent); font-weight: 600; }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; min-width: 0; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.gallery button { padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); aspect-ratio: 1170 / 2532; }
+.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.panel { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 14px; }
+.steps b { color: var(--fg); font-weight: 500; }
+@keyframes peak { 0% { transform: scale(.96); box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 60%, transparent); } 60% { transform: scale(1.01); box-shadow: 0 0 0 14px transparent; } 100% { transform: none; } }
+.approved.peak { animation: peak .7s ease-out; }
 
 h2 { font: 800 30px/1.05 var(--display); text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance; }
 .lead { margin: 0; color: var(--muted); max-width: 60ch; }
@@ -235,6 +255,7 @@ nav.tabs svg { width: 22px; height: 22px; }
 @media (prefers-reduced-motion: reduce) {
   .breath::before { transition: none; }
   .meter i, .fs .fs-hint, .fs .fs-close { transition: none; }
+  .approved.peak { animation: none; }
 }
 </style>
 </head>
@@ -253,6 +274,13 @@ nav.tabs svg { width: 22px; height: 22px; }
       <div class="mkt"><div class="row"><i class="dot" id="dotNy"></i><strong>New York</strong></div><span class="t" id="mktNy"></span></div>
     </div>
 
+    <article class="me-card" id="meCard">
+      <div class="kv"><span class="label">Ricordati chi sei</span><p class="id" id="meId"></p></div>
+      <div class="kv" id="meWantRow"><span class="label">Cosa vuoi dalla tua carriera</span><p id="meWant"></p></div>
+      <div class="kv" id="meWhyRow"><span class="label">Il tuo perché</span><p class="why" id="meWhy"></p></div>
+      <div class="row-btns"><button class="btn" id="btnMeEdit" type="button">Scrivi chi sei</button></div>
+    </article>
+
     <article class="quote">
       <canvas class="spark" id="spark" aria-hidden="true"></canvas>
       <div class="label" id="quoteLabel">Regola del giorno</div>
@@ -268,10 +296,6 @@ nav.tabs svg { width: 22px; height: 22px; }
       <div class="stat"><span class="label">Sessioni rispettate</span><span class="n"><span id="totalN">0</span><small>totali</small></span></div>
     </div>
 
-    <div class="why-card" id="whyCard">
-      <span class="label">Perché fai questo mestiere</span>
-      <p id="whyText"></p>
-    </div>
 
     <button class="btn danger" id="btnCrisis" type="button">Ho appena perso un trade</button>
   </section>
@@ -288,6 +312,7 @@ nav.tabs svg { width: 22px; height: 22px; }
     </div>
     <p class="hint" id="saveHint">Per salvarlo: apri "Schermo intero", tieni premuto sull'immagine e scegli "Salva", oppure fai uno screenshot quando i suggerimenti spariscono.</p>
 
+    <div class="field"><span class="label">Frasi</span><div class="chips" id="srcChips"></div></div>
     <div class="field"><span class="label">Stile</span><div class="chips" id="styleChips"></div></div>
     <div class="field"><span class="label">Colori</span><div class="chips" id="palChips"></div></div>
     <label class="toggle"><input type="checkbox" id="optWhy" checked><span>Metti il mio "perché" sullo sfondo</span></label>
@@ -300,7 +325,29 @@ nav.tabs svg { width: 22px; height: 22px; }
         <option value="900">Ogni 15 minuti</option>
         <option value="3600">Ogni ora</option>
       </select>
-      <p class="hint">Utile con il telefono sul supporto accanto ai monitor: lo schermo resta acceso e il messaggio cambia da solo. Per cambiare lo sfondo di sistema in automatico ogni giorno, segui la guida nel README (Album + Foto casuali su iPhone, cartella a rotazione su Android).</p>
+      <p class="hint">Utile con il telefono sul supporto accanto ai monitor: lo schermo resta acceso e il messaggio cambia da solo.</p>
+    </div>
+
+    <div class="panel" id="lockPanel">
+      <div class="field">
+        <span class="label">Blocco schermo</span>
+        <h2>Le tue frasi a ogni sblocco</h2>
+        <p class="lead">Crea un pacchetto di sfondi con le tue frasi di "Chi sono" e "Cosa voglio", con stile e colori scelti sopra. Il testo sta sotto l'orologio e lontano dai tasti torcia e fotocamera.</p>
+      </div>
+      <div class="row-btns">
+        <button class="btn primary" id="btnPack" type="button">Crea il pacchetto</button>
+        <button class="btn" id="btnPackSave" type="button" hidden>Salva tutti nelle Foto</button>
+      </div>
+      <div class="gallery" id="gallery"></div>
+      <p class="hint" id="packHint" hidden>Tocca uno sfondo per aprirlo a schermo intero e tienilo premuto per salvarlo.</p>
+      <div class="field">
+        <span class="label">Farli ruotare da soli</span>
+        <ol class="steps">
+          <li><b>iPhone:</b> salva gli sfondi in un album "Chi sono" nelle Foto. Poi Impostazioni → Sfondo → Aggiungi nuovo sfondo → <b>Foto casuali</b> → scegli l'album, frequenza <b>Al tocco</b> o <b>Ogni ora</b>.</li>
+          <li><b>Samsung:</b> Impostazioni → Sfondo e stile → Schermata di blocco → <b>Galleria</b>, seleziona più sfondi: cambiano a ogni accensione.</li>
+          <li><b>Altri Android:</b> metti gli sfondi in una cartella e usa un'app di rotazione (per esempio Muzei con "Le mie foto").</li>
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -328,27 +375,41 @@ nav.tabs svg { width: 22px; height: 22px; }
     </div>
   </section>
 
-  <!-- PERCHÉ -->
+  <!-- CHI SONO -->
   <section class="screen" id="tab-perche" hidden>
-    <div class="top"><h2>Il mio perché</h2></div>
-    <p class="lead">Quando il mercato ti mette alla prova, sono queste parole a riportarti al piano. Compaiono nella schermata Oggi e sui tuoi sfondi.</p>
+    <div class="top"><h2>Chi sono</h2><span class="label" id="meCount"></span></div>
+    <p class="lead">Scegli le frasi che descrivono il trader che sei, o che hai deciso di diventare. Diventano il tuo blocco schermo e la prima cosa che leggi ogni mattina. Si salvano da sole.</p>
     <div class="field">
       <label class="label" for="inName">Come ti chiami</label>
       <input type="text" id="inName" maxlength="40" placeholder="Stefano">
     </div>
     <div class="field">
-      <label class="label" for="inWhy">Perché hai scelto il trading</label>
-      <textarea id="inWhy" maxlength="220" placeholder="Voglio la libertà di decidere il mio tempo e costruire qualcosa con le mie regole."></textarea>
+      <span class="label">Io sono un trader che…</span>
+      <div class="chips" id="idChips"></div>
+      <div class="add-row"><input type="text" id="inIdNew" maxlength="90" placeholder="Scrivi la tua frase"><button class="btn" id="btnIdAdd" type="button">Aggiungi</button></div>
+    </div>
+    <div class="field">
+      <span class="label">Cosa voglio dalla mia carriera</span>
+      <div class="chips" id="wantChips"></div>
+      <div class="add-row"><input type="text" id="inWantNew" maxlength="90" placeholder="Voglio…"><button class="btn" id="btnWantAdd" type="button">Aggiungi</button></div>
+    </div>
+    <div class="field">
+      <label class="label" for="inVision">Tra 3 anni voglio essere</label>
+      <textarea id="inVision" maxlength="200" placeholder="Un trader a tempo pieno che vive del proprio conto, con un processo che rifarei identico ogni giorno."></textarea>
     </div>
     <div class="field">
       <label class="label" for="inGoal">Obiettivo dei prossimi 12 mesi</label>
       <input type="text" id="inGoal" maxlength="90" placeholder="Rispettare il rischio dell'1% su ogni trade per 250 sessioni">
     </div>
     <div class="field">
-      <label class="label" for="inRule">La tua regola d'oro (finisce tra le frasi del giorno)</label>
+      <label class="label" for="inWhy">Perché ho scelto il trading</label>
+      <textarea id="inWhy" maxlength="220" placeholder="Voglio la libertà di decidere il mio tempo e costruire qualcosa con le mie regole."></textarea>
+    </div>
+    <div class="field">
+      <label class="label" for="inRule">La mia regola d'oro</label>
       <input type="text" id="inRule" maxlength="90" placeholder="Mai spostare lo stop contro di me.">
     </div>
-    <div class="row-btns"><button class="btn primary" id="btnSaveWhy" type="button">Salva</button></div>
+    <div class="row-btns"><button class="btn primary" id="btnGoLock" type="button">Crea i miei sfondi per il blocco schermo</button></div>
     <p class="hint">Restano solo su questo telefono, in questo browser.</p>
   </section>
 </main>
@@ -362,7 +423,7 @@ nav.tabs svg { width: 22px; height: 22px; }
     <button type="button" role="tab" data-tab="rituale" aria-selected="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L6.8 5M3.5 12l1.2 1.2 2.1-2.2M3.5 18l1.2 1.2 2.1-2.2"/></svg>Rituale</button>
     <button type="button" role="tab" data-tab="perche" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3c3 4 6 6 6 10a6 6 0 0 1-12 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3 0-6 2-8.5z"/></svg>Perché</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Chi sono</button>
   </div>
 </nav>
 
@@ -467,6 +528,24 @@ nav.tabs svg { width: 22px; height: 22px; }
     "So qual è la mia perdita massima giornaliera",
     "Oggi niente revenge trading"
   ];
+  var ID_PRESETS = [
+    "Rispetto ogni stop, senza eccezioni.",
+    "Opero solo i miei setup. Il resto è rumore.",
+    "Proteggo il capitale prima di tutto.",
+    "Resto lucido quando gli altri si agitano.",
+    "Imparo da ogni trade, vinto o perso.",
+    "Aspetto il mio prezzo. La pazienza è il mio edge.",
+    "Tratto il trading come un mestiere, non come una scommessa.",
+    "Nei drawdown non mollo: eseguo il piano."
+  ];
+  var WANT_PRESETS = [
+    "Voglio vivere del mio trading.",
+    "Voglio la libertà di decidere il mio tempo.",
+    "Voglio essere costante, mese dopo mese.",
+    "Voglio gestire un conto più grande con le stesse regole.",
+    "Voglio diventare un trader professionista.",
+    "Voglio essere orgoglioso di come opero, non solo di quanto guadagno."
+  ];
   var PALETTES = [
     { id: "petrolio", name: "Petrolio", bg1: "#08141a", bg2: "#123540", fg: "#eef3f1", accent: "#e8b04a", up: "#4fb3a3", down: "#d9705a" },
     { id: "ambra", name: "Ambra", bg1: "#140d07", bg2: "#3b2513", fg: "#fbefdc", accent: "#ffb347", up: "#c8b07a", down: "#c9573c" },
@@ -503,15 +582,27 @@ nav.tabs svg { width: 22px; height: 22px; }
   var DAYS = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
   /* ---------- stato ---------- */
-  var profile = store.get("profile", { name: "", why: "", goal: "", rule: "" });
+  var profile = Object.assign({ name: "", why: "", goal: "", rule: "", vision: "", ids: [], wants: [], idOpts: [], wantOpts: [] }, store.get("profile", {}));
   var sessions = store.get("sessions", {});           // { "2026-10-24": true }
   var checks = store.get("checks", {});               // { day: [bool...] }
   var wins = store.get("wins", []);                   // [{d, t}]
-  var wpPrefs = store.get("wp", { style: "candele", pal: "petrolio", why: true, streak: true, rotate: "0" });
+  var wpPrefs = Object.assign({ style: "candele", pal: "petrolio", why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
   var quoteOffset = 0;
   var wpSeed = Date.now() & 0xffffffff;
   var wpQuote = null;
 
+  // frasi personali: chi sono, cosa voglio, visione, obiettivo, perché, regola
+  function personalPhrases() {
+    var out = [];
+    profile.ids.forEach(function (t) { out.push({ text: t, label: "CHI SONO" }); });
+    profile.wants.forEach(function (t) { out.push({ text: t, label: "COSA VOGLIO" }); });
+    if (profile.vision) out.push({ text: profile.vision, label: "TRA 3 ANNI" });
+    if (profile.goal) out.push({ text: profile.goal, label: "OBIETTIVO 12 MESI" });
+    if (profile.why) out.push({ text: profile.why, label: "IL MIO PERCHÉ", isWhy: true });
+    if (profile.rule) out.push({ text: profile.rule, label: "LA MIA REGOLA" });
+    return out;
+  }
+  function useMine() { return wpPrefs.src === "mine" || (wpPrefs.src === "auto" && personalPhrases().length > 0); }
   function allQuotes() {
     var list = QUOTES.slice();
     if (profile.rule && profile.rule.trim()) list.push(profile.rule.trim());
@@ -579,8 +670,14 @@ nav.tabs svg { width: 22px; height: 22px; }
     $("quoteText").textContent = quoteFor(d, quoteOffset);
     $("streakN").textContent = streak();
     $("totalN").textContent = totalSessions();
-    var why = (profile.why || "").trim();
-    $("whyText").textContent = why || "Non l'hai ancora scritto. Apri “Perché” e mettilo nero su bianco: è la frase che rileggerai nei giorni difficili.";
+    var n = dayNumber(d);
+    var ids = profile.ids, wants = profile.wants.concat(profile.vision ? [profile.vision] : []);
+    var empty = !ids.length && !wants.length && !profile.why;
+    $("meId").textContent = ids.length ? ids[n % ids.length]
+      : "Non hai ancora scritto chi sei. Bastano due minuti, e diventa la prima cosa che leggi ogni mattina.";
+    $("meWantRow").hidden = !wants.length; $("meWant").textContent = wants.length ? wants[n % wants.length] : "";
+    $("meWhyRow").hidden = !profile.why; $("meWhy").textContent = profile.why || "";
+    $("btnMeEdit").textContent = empty ? "Scrivi chi sei" : "Modifica";
     drawSpark();
     renderMarkets();
   }
@@ -708,26 +805,44 @@ nav.tabs svg { width: 22px; height: 22px; }
     if (o.streak && o.streakN > 0) {
       g.font = "500 32px 'IBM Plex Mono', monospace";
       g.fillStyle = hexA(pal.fg, 0.7);
-      g.fillText(o.streakN + (o.streakN === 1 ? " GIORNO" : " GIORNI") + " DI DISCIPLINA DI FILA", X, H * 0.935);
+      g.fillText(o.streakN + (o.streakN === 1 ? " GIORNO" : " GIORNI") + " DI DISCIPLINA DI FILA", X, H * 0.865);
     }
   }
 
-  function currentWpOptions() {
+  function pickPhrase() {
+    if (useMine()) { var mine = personalPhrases(); return mine[Math.floor(Math.random() * mine.length)]; }
+    var list = allQuotes(); return { text: list[Math.floor(Math.random() * list.length)] };
+  }
+  function wpOptions(ph, seed) {
     return {
-      seed: wpSeed, style: wpPrefs.style, pal: wpPrefs.pal,
-      quote: wpQuote || quoteFor(new Date(), quoteOffset),
-      why: wpPrefs.why, whyText: (profile.why || "").trim(),
-      streak: wpPrefs.streak, streakN: streak(), date: new Date()
+      seed: seed, style: wpPrefs.style, pal: wpPrefs.pal,
+      quote: ph.text, label: ph.label,
+      why: wpPrefs.why && !ph.isWhy, whyText: (profile.why || "").trim(),
+      streak: wpPrefs.streak, streakN: streak(), date: ph.label ? null : new Date()
     };
+  }
+  function currentWpOptions() {
+    if (!wpQuote) wpQuote = useMine() ? pickPhrase() : { text: quoteFor(new Date(), quoteOffset) };
+    return wpOptions(wpQuote, wpSeed);
   }
   function drawWp() { renderWallpaper($("wpCanvas"), currentWpOptions()); }
   function newWp() {
     wpSeed = (Math.random() * 4294967296) >>> 0;
-    var list = allQuotes(); wpQuote = list[Math.floor(Math.random() * list.length)];
+    wpQuote = pickPhrase();
     drawWp();
   }
 
   function buildChips() {
+    var src = $("srcChips"); src.innerHTML = "";
+    [["mine", "Le mie (chi sono, cosa voglio)"], ["trade", "Regole del mestiere"]].forEach(function (o) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = o[1];
+      b.setAttribute("aria-pressed", String(useMine() === (o[0] === "mine")));
+      b.onclick = function () {
+        if (o[0] === "mine" && !personalPhrases().length) { toast("Prima scrivi chi sei nella sezione Chi sono"); showTab("perche"); return; }
+        wpPrefs.src = o[0]; store.set("wp", wpPrefs); buildChips(); newWp();
+      };
+      src.appendChild(b);
+    });
     var sc = $("styleChips"); sc.innerHTML = "";
     STYLES.forEach(function (s) {
       var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = s.name;
@@ -749,14 +864,14 @@ nav.tabs svg { width: 22px; height: 22px; }
   /* schermo intero + rotazione */
   var inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
   var rotTimer = null, hintTimer = null, wakeLock = null;
-  function showFs() {
+  function showFs(url) {
     var fs = $("fs");
-    $("fsImg").src = $("wpCanvas").toDataURL("image/png");
+    $("fsImg").src = typeof url === "string" ? url : $("wpCanvas").toDataURL("image/png");
     fs.hidden = false; fs.classList.remove("clean");
     clearTimeout(hintTimer); hintTimer = setTimeout(function () { fs.classList.add("clean"); }, 3500);
     var sec = parseInt(wpPrefs.rotate, 10) || 0;
     clearInterval(rotTimer);
-    if (sec) rotTimer = setInterval(function () { newWp(); $("fsImg").src = $("wpCanvas").toDataURL("image/png"); }, sec * 1000);
+    if (sec && typeof url !== "string") rotTimer = setInterval(function () { newWp(); $("fsImg").src = $("wpCanvas").toDataURL("image/png"); }, sec * 1000);
     try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { wakeLock = l; }, function () {}); } catch (e) {}
   }
   function hideFs() {
@@ -782,6 +897,46 @@ nav.tabs svg { width: 22px; height: 22px; }
     }, "image/png");
   }
 
+  /* ---------- pacchetto blocco schermo ---------- */
+  var packUrls = [];
+  function buildPack() {
+    var mine = personalPhrases();
+    if (!mine.length) { toast("Prima scrivi chi sei nella sezione Chi sono"); showTab("perche"); return; }
+    // tutte le frasi personali, completate con regole del mestiere fino a 10 sfondi
+    var list = mine.slice(0, 14), q = allQuotes(), k = 0;
+    while (list.length < 10) list.push({ text: q[(dayNumber(new Date()) + k++ * 5) % q.length] });
+    var c = document.createElement("canvas"); c.width = 1170; c.height = 2532;
+    var gal = $("gallery"); gal.innerHTML = ""; packUrls = [];
+    list.forEach(function (ph, i) {
+      renderWallpaper(c, wpOptions(ph, (Math.random() * 4294967296) >>> 0));
+      var url = c.toDataURL("image/jpeg", 0.9); packUrls.push(url);
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "Apri sfondo " + (i + 1));
+      var img = document.createElement("img"); img.src = url; img.alt = ph.text;
+      b.appendChild(img); b.onclick = function () { showFs(url); }; gal.appendChild(b);
+    });
+    $("packHint").hidden = false;
+    $("btnPackSave").hidden = inFrame;
+    toast(list.length + " sfondi pronti");
+  }
+  function savePack() {
+    var files = packUrls.map(function (u, i) {
+      var bin = atob(u.split(",")[1]), arr = new Uint8Array(bin.length);
+      for (var j = 0; j < bin.length; j++) arr[j] = bin.charCodeAt(j);
+      return new File([arr], "chi-sono-" + pad(i + 1) + ".jpg", { type: "image/jpeg" });
+    });
+    if (navigator.canShare && navigator.canShare({ files: files })) {
+      navigator.share({ files: files, title: "Chi sono" }).catch(function () {});
+      return;
+    }
+    files.forEach(function (f, i) {
+      setTimeout(function () {
+        var a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name;
+        document.body.appendChild(a); a.click(); a.remove();
+      }, i * 300);
+    });
+    toast("Sfondi salvati");
+  }
+
   /* ---------- rituale ---------- */
   function renderRitual() {
     var today = new Date(), key = dayKey(today);
@@ -801,7 +956,10 @@ nav.tabs svg { width: 22px; height: 22px; }
         var done = state.every(Boolean);
         var was = !!sessions[key];
         sessions[key] = done; store.set("sessions", sessions);
-        if (done && !was) toast("Sessione approvata. Giorni di fila: " + streak());
+        if (done && !was) {
+          toast("Sessione approvata. Giorni di fila: " + streak());
+          var ap = $("approved"); ap.classList.remove("peak"); void ap.offsetWidth; ap.classList.add("peak");
+        }
         renderRitualStatus(state);
       };
       ul.appendChild(li);
@@ -870,15 +1028,43 @@ nav.tabs svg { width: 22px; height: 22px; }
   }
 
   /* ---------- profilo ---------- */
-  function fillProfile() {
-    $("inName").value = profile.name || ""; $("inWhy").value = profile.why || "";
-    $("inGoal").value = profile.goal || ""; $("inRule").value = profile.rule || "";
+  function saveProfileNow() { store.set("profile", profile); $("meCount").textContent = personalPhrases().length + " frasi"; }
+  function buildPicks(boxId, presets, optsKey, selKey) {
+    var box = $(boxId); box.innerHTML = "";
+    presets.concat(profile[optsKey]).forEach(function (t) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip pick"; b.textContent = t;
+      b.setAttribute("aria-pressed", String(profile[selKey].indexOf(t) >= 0));
+      b.onclick = function () {
+        var i = profile[selKey].indexOf(t);
+        if (i >= 0) profile[selKey].splice(i, 1); else profile[selKey].push(t);
+        b.setAttribute("aria-pressed", String(i < 0));
+        wpQuote = null; saveProfileNow();
+      };
+      box.appendChild(b);
+    });
   }
-  function saveProfile() {
-    profile = { name: $("inName").value.trim(), why: $("inWhy").value.trim(), goal: $("inGoal").value.trim(), rule: $("inRule").value.trim() };
-    store.set("profile", profile);
-    toast("Salvato. Rileggilo ogni mattina.");
-    renderToday(); drawWp();
+  function addPick(inputId, optsKey, selKey, boxId, presets) {
+    var v = $(inputId).value.trim(); if (!v) return;
+    if (!/[.!?]$/.test(v)) v += ".";
+    if (presets.indexOf(v) < 0 && profile[optsKey].indexOf(v) < 0) profile[optsKey].push(v);
+    if (profile[selKey].indexOf(v) < 0) profile[selKey].push(v);
+    $(inputId).value = ""; saveProfileNow(); buildPicks(boxId, presets, optsKey, selKey);
+  }
+  function fillProfile() {
+    $("inName").value = profile.name; $("inWhy").value = profile.why; $("inGoal").value = profile.goal;
+    $("inRule").value = profile.rule; $("inVision").value = profile.vision;
+    buildPicks("idChips", ID_PRESETS, "idOpts", "ids");
+    buildPicks("wantChips", WANT_PRESETS, "wantOpts", "wants");
+    saveProfileNow();
+  }
+  function bindProfileFields() {
+    [["inName", "name"], ["inWhy", "why"], ["inGoal", "goal"], ["inRule", "rule"], ["inVision", "vision"]].forEach(function (f) {
+      $(f[0]).addEventListener("input", function () { profile[f[1]] = this.value.trim(); wpQuote = null; saveProfileNow(); });
+    });
+    $("btnIdAdd").onclick = function () { addPick("inIdNew", "idOpts", "ids", "idChips", ID_PRESETS); };
+    $("btnWantAdd").onclick = function () { addPick("inWantNew", "wantOpts", "wants", "wantChips", WANT_PRESETS); };
+    $("inIdNew").addEventListener("keydown", function (e) { if (e.key === "Enter") $("btnIdAdd").click(); });
+    $("inWantNew").addEventListener("keydown", function (e) { if (e.key === "Enter") $("btnWantAdd").click(); });
   }
 
   /* ---------- navigazione ---------- */
@@ -888,7 +1074,7 @@ nav.tabs svg { width: 22px; height: 22px; }
     TABS.forEach(function (t) { $("tab-" + t).hidden = t !== name; });
     document.querySelectorAll("nav.tabs button").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.tab === name)); });
     if (name === "oggi") renderToday();
-    if (name === "sfondi") drawWp();
+    if (name === "sfondi") { buildChips(); drawWp(); }
     if (name === "rituale") renderRitual();
     if (name === "perche") fillProfile();
     window.scrollTo(0, 0);
@@ -898,13 +1084,13 @@ nav.tabs svg { width: 22px; height: 22px; }
   function start() {
     document.querySelectorAll("nav.tabs button").forEach(function (b) { b.onclick = function () { showTab(b.dataset.tab); }; });
     $("btnNextQuote").onclick = function () { quoteOffset++; renderToday(); };
-    $("btnQuoteWp").onclick = function () { wpQuote = $("quoteText").textContent; showTab("sfondi"); };
+    $("btnQuoteWp").onclick = function () { wpQuote = { text: $("quoteText").textContent }; showTab("sfondi"); };
     $("btnCrisis").onclick = openCrisis;
     $("btnCrisisClose").onclick = closeCrisis;
     $("btnCrisisMsg").onclick = function () { crisisIdx = (crisisIdx + 1) % CRISIS.length; $("crisisMsg").textContent = CRISIS[crisisIdx]; };
     $("btnPause").onclick = startPause;
     $("btnNewWp").onclick = newWp;
-    $("btnFull").onclick = showFs;
+    $("btnFull").onclick = function () { showFs(); };
     $("fsClose").onclick = hideFs;
     $("fsImg").onclick = function () { $("fs").classList.toggle("clean"); };
     $("btnSave").hidden = inFrame;
@@ -914,7 +1100,15 @@ nav.tabs svg { width: 22px; height: 22px; }
     $("optWhy").onchange = function () { wpPrefs.why = this.checked; store.set("wp", wpPrefs); drawWp(); };
     $("optStreak").onchange = function () { wpPrefs.streak = this.checked; store.set("wp", wpPrefs); drawWp(); };
     $("optRotate").onchange = function () { wpPrefs.rotate = this.value; store.set("wp", wpPrefs); };
-    $("btnSaveWhy").onclick = saveProfile;
+    bindProfileFields();
+    $("btnMeEdit").onclick = function () { showTab("perche"); };
+    $("btnGoLock").onclick = function () {
+      if (!personalPhrases().length) { toast("Scegli almeno una frase"); return; }
+      wpPrefs.src = "mine"; store.set("wp", wpPrefs); wpQuote = null; showTab("sfondi");
+      buildPack(); $("lockPanel").scrollIntoView({ behavior: "smooth" });
+    };
+    $("btnPack").onclick = buildPack;
+    $("btnPackSave").onclick = savePack;
     $("btnWin").onclick = function () {
       var v = $("winInput").value.trim(); if (!v) return;
       wins.unshift({ d: Date.now(), t: v }); wins = wins.slice(0, 60); store.set("wins", wins);
