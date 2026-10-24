@@ -18,13 +18,13 @@ const COUNT = parseInt(process.argv[2] || "24", 10);
   for (let i = 0; i < COUNT; i++) {
     const data = await page.evaluate(async (i) => {
       const A = window.EdgeApp;
-      // atmosfere a rotazione, con il motion design WebGL in primo piano
-      const styles = ["scie", "tropici", "strade", "aurora", "energia", "tropici", "scie", "strade", "spazio", "casa", "tropici", "linea"];
-      const style = styles[i % styles.length];
+      // foto con effetti di luce sopra: atmosfera, effetto e scatto ruotano
+      const combos = [["tropici", "raggi", 0], ["strade", "scie", 7], ["tropici", "aurora", 28], ["spazio", "aurora", 0], ["tropici", "scie", 14],
+        ["strade", "energia", 0], ["tropici", "energia", 7], ["strada", "scie", 0], ["strade", "aurora", 7], ["tropici", "scie", 0], ["vetro", "auto", 7], ["casa", "auto", 4242]];
+      const [style, fx, seed0] = combos[i % combos.length];
       const calm = i % 2 === 0;
       const o = {
-        seed: style === "tropici" ? [0, 14, 28, 7, 21][Math.floor(i / 3) % 5] : style === "strade" ? [7, 0, 14][Math.floor(i / 5) % 3] : 1000 + i * 7919,
-        style, pal: style === "linea" ? "nero" : ["nero", "notte", "bottiglia", "bordeaux"][i % 4],
+        seed: seed0 + (i >= combos.length ? 7 : 0), style, fx, pal: ["nero", "notte", "nero", "bordeaux"][i % 4],
         quote: calm ? A.CALM[(i * 5) % A.CALM.length] : A.QUOTES[(i * 7) % A.QUOTES.length],
         label: calm ? "Mente calma" : "Regola del mestiere", date: null, why: false, streak: false,
       };

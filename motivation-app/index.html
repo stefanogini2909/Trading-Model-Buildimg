@@ -297,7 +297,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     </div>
 
     <div class="group"><span class="label">Frasi</span><div class="chips" id="srcChips"></div></div>
-    <div class="group"><span class="label">Atmosfera</span><div class="chips" id="styleChips"></div></div>
+    <div class="group"><span class="label">Foto</span><div class="chips" id="styleChips"></div></div>
+    <div class="group"><span class="label">Effetto di luce sulla foto</span><div class="chips" id="fxChips"></div></div>
     <div class="group"><span class="label">Colori</span><div class="chips" id="palChips"></div></div>
     <div class="group">
       <label class="toggle"><input type="checkbox" id="optAnim" checked><span>Animazione a schermo intero</span></label>
@@ -553,9 +554,6 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     { id: "pietra", name: "Pietra", bg: "#e4e3de", fg: "#161514", accent: "#8a5a1e" }
   ];
   var STYLES = [
-    { id: "scie", name: "Scie di luce" },
-    { id: "energia", name: "Flusso di energia" },
-    { id: "aurora", name: "Aurora" },
     { id: "tropici", name: "Tropici al tramonto" },
     { id: "strade", name: "Strade dall'alto" },
     { id: "casa", name: "Casa sotto la pioggia" },
@@ -628,8 +626,9 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var sessions = store.get("sessions", {});           // { "2026-10-24": true }
   var checks = store.get("checks", {});               // { day: [bool...] }
   var wins = store.get("wins", []);                   // [{d, t}]
-  var wpPrefs = Object.assign({ style: "scie", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
-  if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "linea";
+  var wpPrefs = Object.assign({ style: "tropici", fx: "auto", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
+  if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "tropici";
+  if (!wpPrefs.fx) wpPrefs.fx = "auto";
   if (!PALETTES.some(function (x) { return x.id === wpPrefs.pal; })) wpPrefs.pal = "nero";
   var quoteOffset = 0;
   var wpSeed = Date.now() & 0xffffffff;
@@ -802,7 +801,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 
   /* ---------- atmosfere: foto e scene animate ---------- */
   var LOOP = 8; // secondi: ogni animazione si ripete senza stacchi
-  var SCENES = ["scie", "energia", "aurora", "tropici", "strade", "casa", "vetro", "spazio", "strada"];
+  var SCENES = ["tropici", "strade", "spazio", "strada", "tropici", "strade", "casa", "vetro"];
   var PHOTOS = {
     vetro: ["photos/pioggia-vetro.jpg", "photos/pioggia-auto-notte.jpg", "photos/pioggia-finestrino.jpg"],
     spazio: ["photos/astronauta-iss.jpg", "photos/stazione-alba.jpg", "photos/astronauta-casco.jpg"],
@@ -992,6 +991,22 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var GL_LOOP = 10;
   var GL_SCENES = { energia: 0, aurora: 1, tropici: 2, spazio: 3, strada: 4, scie: 5, strade: 6 };
   var PHOTO_MODES = [2, 3, 4, 6];
+  // effetti di luce composti sopra le foto
+  var FX = [
+    { id: "auto", name: "Automatico" },
+    { id: "raggi", name: "Fasci di luce" },
+    { id: "scie", name: "Scie di luce" },
+    { id: "energia", name: "Flusso di energia" },
+    { id: "aurora", name: "Aurora" },
+    { id: "nessuno", name: "Nessuno" }
+  ];
+  var FX_CODE = { nessuno: 0, raggi: 1, scie: 2, energia: 3, aurora: 4 };
+  var AUTO_FX = { tropici: "raggi", strade: "scie", spazio: "aurora", strada: "scie" };
+  function fxOf(o) {
+    if (o.fx && o.fx !== "auto") return o.fx;
+    if (o.style === "misto") return ["raggi", "scie", "energia", "aurora"][Math.floor(o.seed / 3) % 4];
+    return AUTO_FX[sceneOf(o)] || "nessuno";
+  }
   // fondo, colore A, colore B, luce piena: uno per ogni tavolozza
   var GL_COLORS = {
     nero: ["#060608", "#d4a95c", "#c0653f", "#fff4de"],
@@ -1040,7 +1055,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var FRAG_SCENE = GLSL_COMMON + "\n" + [
     "uniform vec2 u_res; uniform float u_t; uniform float u_loop; uniform int u_mode; uniform float u_seed; uniform float u_enc;",
     "uniform vec3 u_bg; uniform vec3 u_a; uniform vec3 u_b; uniform vec3 u_hot;",
-    "uniform sampler2D u_tex; uniform float u_hasTex; uniform float u_horizon; uniform vec2 u_sun;",
+    "uniform sampler2D u_tex; uniform float u_hasTex; uniform float u_horizon; uniform vec2 u_sun; uniform int u_fx; uniform float u_mask;",
     // movimento su un cerchio: dopo un ciclo tutto torna identico, il loop non ha stacchi
     "vec2 cyc(float r, float ph){ float a = 6.2831853 * (u_t / u_loop) + ph; return vec2(cos(a), sin(a)) * r; }",
     "float ph1(){ return 6.2831853 * u_t / u_loop; }",
@@ -1138,52 +1153,55 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     "  vec2 tuv = (uv + d * 0.010 * water - 0.5) / z + 0.5;",
     "  vec3 c = tex(tuv);",
     "  float l = luma(c);",
+    // 1. ambiente leggero, proprio di ogni foto
     "  if (u_mode == 2) {",
-    // fasci di luce volumetrici dal sole: campionano il cielo verso il sole, le palme li bloccano
-    "    vec2 sun = (u_sun - 0.5) / z + 0.5;",
-    "    vec2 dv = sun - tuv;",
-    "    float occ = 0.0;",
-    "    for (int i = 1; i <= 36; i++){",
-    "      vec2 sp = tuv + dv * (float(i) / 36.0);",
-    "      occ += smoothstep(0.30, 0.62, luma(tex(sp)));",
-    "    }",
-    "    occ /= 36.0;",
-    "    vec2 dd = dv * vec2(asp, 1.0);",
-    "    float dist = length(dd);",
-    "    float ang = atan(dd.y, dd.x);",
-    "    float shafts = 0.72 + 0.28 * sin(ang * 22.0 + 1.3 * sin(ph1())) * sin(ang * 9.0 - ph1());",
-    // due fasci larghi che ruotano lentamente e passano dietro le palme
-    "    float beams = pow(0.5 + 0.5 * sin(ang * 3.0 + ph1()), 10.0) + 0.6 * pow(0.5 + 0.5 * sin(ang * 5.0 - ph1() + 1.7), 14.0);",
-    "    float here = smoothstep(0.12, 0.45, l);",
-    "    vec3 warm = mix(u_hot, vec3(1.0, 0.72, 0.42), 0.55);",
-    // dove il cielo è già chiaro la luce aggiunta si attenua, così le alte luci non bruciano
-    "    float room = 1.0 - 0.92 * smoothstep(0.42, 0.9, l);",
-    "    c += warm * occ * occ * exp(-dist * 2.3) * (0.25 + 0.55 * shafts + 1.3 * beams) * (0.15 + 0.85 * here) * 0.8 * room;",
-    "    c += warm * exp(-dist * 9.0) * 0.55 * here * room;",
     "    float glint = pow(noise(uv * vec2(160.0, 360.0) + cyc(2.5, 0.0)), 22.0) * water;",
-    "    c += glint * warm * 2.4;",
+    "    c += glint * mix(u_hot, vec3(1.0, 0.72, 0.42), 0.55) * 2.4;",
     "  } else if (u_mode == 3) {",
-    "    float dark = 1.0 - smoothstep(0.04, 0.18, l);",
-    "    c += vec3(0.9) * stars(uv, 0.006) * dark;",
-    // una luce calda che attraversa la scena, come un light leak
-    "    float sweep = exp(-pow((uv.x + uv.y * 0.6 - mod(u_t / u_loop * 2.6, 2.6) + 0.5) * 3.0, 2.0));",
-    "    c += u_a * sweep * 0.18;",
+    "    c += vec3(0.9) * stars(uv, 0.006) * (1.0 - smoothstep(0.04, 0.18, l));",
     "  } else if (u_mode == 6) {",
-    // strade dall'alto: le luci della città respirano, una luce morbida attraversa la scena in diagonale
     // respirano solo i punti luce: pixel più luminosi dei vicini (finestre, lampioni), non il cielo
     "    vec2 o4 = 4.0 / u_res;",
     "    float around = (luma(tex(tuv + vec2(o4.x, 0.0))) + luma(tex(tuv - vec2(o4.x, 0.0))) + luma(tex(tuv + vec2(0.0, o4.y))) + luma(tex(tuv - vec2(0.0, o4.y)))) * 0.25;",
     "    float point = smoothstep(0.06, 0.25, l - around);",
     "    float tw = hash(floor(uv * u_res / 5.0));",
     "    c += c * point * 0.8 * (0.5 + 0.5 * sin(2.0 * ph1() + tw * 6.2831853));",
-    "    float sweep = exp(-pow((uv.x * 0.8 + uv.y - mod(u_t / u_loop * 2.6, 2.6) + 0.4) * 3.2, 2.0));",
-    "    c += mix(u_hot, vec3(1.0, 0.8, 0.55), 0.5) * sweep * 0.10 * (0.4 + l);",
     "  } else {",
-    // una scia di luce orizzontale che scorre sulla carrozzeria
-    "    float f = mod(u_t / u_loop, 1.0);",
-    "    float x0 = -0.3 + f * 1.6;",
-    "    float streak = exp(-pow((uv.x - x0) * 2.2, 2.0)) * smoothstep(0.2, 0.9, l);",
-    "    c += u_hot * streak * 0.55;",
+    // un riflesso che scorre sulle parti lucide della carrozzeria
+    "    float x0 = -0.3 + mod(u_t / u_loop, 1.0) * 1.6;",
+    "    c += u_hot * exp(-pow((uv.x - x0) * 2.2, 2.0)) * smoothstep(0.35, 0.9, l) * 0.35;",
+    "  }",
+    // 2. l'effetto scelto, composto sopra la foto. Con le palme passa dietro le sagome scure.
+    "  float behind = u_mask > 0.5 ? smoothstep(0.10, 0.42, l) : 1.0;",
+    "  float room = 1.0 - 0.7 * smoothstep(0.45, 0.95, l);",
+    "  vec2 p = (uv - 0.5) * vec2(asp, 1.0) * 2.0;",
+    "  if (u_fx == 1) {",
+    // fasci di luce volumetrici dal sole della foto: campionano verso il sole, le sagome li bloccano
+    "    vec2 sun = (u_sun - 0.5) / z + 0.5;",
+    "    vec2 dv = sun - tuv;",
+    "    float occ = 0.0;",
+    "    for (int i = 1; i <= 36; i++){",
+    "      occ += smoothstep(0.30, 0.62, luma(tex(tuv + dv * (float(i) / 36.0))));",
+    "    }",
+    "    occ /= 36.0;",
+    "    vec2 dd = dv * vec2(asp, 1.0);",
+    "    float dist = length(dd), ang = atan(dd.y, dd.x);",
+    "    float shafts = 0.72 + 0.28 * sin(ang * 22.0 + 1.3 * sin(ph1())) * sin(ang * 9.0 - ph1());",
+    "    float beams = pow(0.5 + 0.5 * sin(ang * 3.0 + ph1()), 10.0) + 0.6 * pow(0.5 + 0.5 * sin(ang * 5.0 - ph1() + 1.7), 14.0);",
+    "    float here = smoothstep(0.12, 0.45, l);",
+    "    vec3 warm = mix(u_hot, vec3(1.0, 0.72, 0.42), 0.55);",
+    "    float r2 = 1.0 - 0.92 * smoothstep(0.42, 0.9, l);",
+    "    c += warm * occ * occ * exp(-dist * 2.5) * (0.25 + 0.55 * shafts + 1.2 * beams) * (0.15 + 0.85 * here) * 0.55 * r2;",
+    "    c += warm * exp(-dist * 9.0) * 0.3 * here * r2;",
+    "  } else if (u_fx == 2) {",
+    "    vec3 fx = streak(p, 0.22, 2.1, 0.10, 4.3, u_seed, 1.0) + streak(p * vec2(-1.0, 1.0) + vec2(0.05, 0.0), 0.16, 1.6, 0.07, 3.7, 2.4 + u_seed, 0.45);",
+    "    c += fx * behind * room;",
+    "  } else if (u_fx == 3) {",
+    "    c += max(energy(p) - u_bg, 0.0) * 0.85 * behind * room;",
+    "  } else if (u_fx == 4) {",
+    // l'aurora vive nel cielo, la metà alta, e sta dietro a tutto ciò che è scuro
+    "    float sky = smoothstep(0.3, 0.75, uv.y);",
+    "    c += max(aurora(p, uv) - u_bg, 0.0) * 0.95 * sky * (u_mask > 0.5 ? behind : 1.0 - smoothstep(0.08, 0.35, l));",
     "  }",
     "  return c;",
     "}",
@@ -1282,7 +1300,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
       var u = {}; names.forEach(function (n) { u[n] = gl.getUniformLocation(p, "u_" + n); });
       return { p: p, u: u };
     }
-    this.ps = prog(FRAG_SCENE, ["res", "t", "loop", "mode", "seed", "enc", "bg", "a", "b", "hot", "tex", "hasTex", "horizon", "sun"]);
+    this.ps = prog(FRAG_SCENE, ["res", "t", "loop", "mode", "seed", "enc", "bg", "a", "b", "hot", "tex", "hasTex", "horizon", "sun", "fx", "mask"]);
     this.pb = prog(FRAG_BRIGHT, ["src", "texel", "dec", "enc", "thr"]);
     this.pl = prog(FRAG_BLUR, ["src", "dir"]);
     this.pf = prog(FRAG_FINAL, ["scene", "b1", "b2", "b3", "dec", "w", "tm", "intro", "t", "loop", "res", "sh", "hiA", "hiB", "sat", "con", "amt", "sharp", "vib"]);
@@ -1362,6 +1380,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     gl.uniform1f(u.horizon, HORIZON[src] || 0);
     var sun = rec && rec.sun ? rec.sun : [0.5, 0.65];
     gl.uniform2f(u.sun, sun[0], sun[1]);
+    gl.uniform1i(u.fx, FX_CODE[fxOf(o)] || 0);
+    gl.uniform1f(u.mask, mode === 2 ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     // 2. luci forti, un quarto della risoluzione
     P = this.pb; this.pass(P, T.a1); this.bind(0, T.scene.tex);
@@ -1458,7 +1478,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   }
   function wpOptions(ph, seed) {
     return {
-      seed: seed, style: wpPrefs.style, pal: wpPrefs.pal,
+      seed: seed, style: wpPrefs.style, pal: wpPrefs.pal, fx: wpPrefs.fx,
       quote: ph.text, label: ph.label,
       why: wpPrefs.why && !ph.isWhy, whyText: (profile.why || "").trim(),
       streak: wpPrefs.streak, streakN: streak(), date: ph.label ? null : new Date()
@@ -1496,6 +1516,13 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
       b.setAttribute("aria-pressed", String(wpPrefs.style === s.id));
       b.onclick = function () { wpPrefs.style = s.id; store.set("wp", wpPrefs); buildChips(); newWp(); };
       sc.appendChild(b);
+    });
+    var fc = $("fxChips"); fc.innerHTML = "";
+    FX.forEach(function (f) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = f.name;
+      b.setAttribute("aria-pressed", String(wpPrefs.fx === f.id));
+      b.onclick = function () { wpPrefs.fx = f.id; store.set("wp", wpPrefs); buildChips(); drawWp(); };
+      fc.appendChild(b);
     });
     var pc = $("palChips"); pc.innerHTML = "";
     PALETTES.forEach(function (p) {

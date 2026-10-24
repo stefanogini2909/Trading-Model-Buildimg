@@ -10,15 +10,14 @@ const APP = path.resolve(__dirname, "..");
 const OUT = path.join(APP, "videos");
 const FPS = 60;
 const VIDEOS = [
-  { name: "scie-di-luce-oro", style: "scie", pal: "nero", seed: 11, calm: 4 },
-  { name: "scie-di-luce-blu", style: "scie", pal: "notte", seed: 3, quote: 2 },
-  { name: "energia-oro", style: "energia", pal: "nero", seed: 11, calm: 1 },
-  { name: "aurora-boreale", style: "aurora", pal: "notte", seed: 5, calm: 3 },
-  { name: "palme-controluce", style: "tropici", pal: "nero", seed: 0, calm: 5 },
-  { name: "palme-crepuscolo", style: "tropici", pal: "bordeaux", seed: 14, calm: 6 },
-  { name: "strade-notte", style: "strade", pal: "nero", seed: 7, calm: 0 },
-  { name: "strade-lungolago", style: "strade", pal: "nero", seed: 0, quote: 1 },
-  { name: "astronauta", style: "spazio", pal: "notte", seed: 0, calm: 2 },
+  { name: "palme-scie-di-luce", style: "tropici", fx: "scie", pal: "nero", seed: 0, calm: 4 },
+  { name: "palme-aurora", style: "tropici", fx: "aurora", pal: "notte", seed: 28, calm: 1 },
+  { name: "palme-fasci-di-luce", style: "tropici", fx: "raggi", pal: "nero", seed: 0, calm: 5 },
+  { name: "palme-energia", style: "tropici", fx: "energia", pal: "bordeaux", seed: 14, calm: 6 },
+  { name: "strade-notte-scie", style: "strade", fx: "scie", pal: "nero", seed: 7, calm: 0 },
+  { name: "strade-notte-aurora", style: "strade", fx: "aurora", pal: "notte", seed: 7, quote: 2 },
+  { name: "lungolago-energia", style: "strade", fx: "energia", pal: "notte", seed: 0, quote: 1 },
+  { name: "astronauta-aurora", style: "spazio", fx: "aurora", pal: "bottiglia", seed: 0, calm: 2 },
   { name: "casa-pioggia", style: "casa", seed: 4242, calm: 0 },
   { name: "pioggia-vetro", style: "vetro", seed: 7, calm: 1 },
 ];
@@ -40,7 +39,7 @@ const ONLY = process.argv[2] ? process.argv[2].split(",") : null;
     await page.evaluate(async (v) => {
       const A = window.EdgeApp;
       window.__o = {
-        seed: v.seed, style: v.style, pal: v.pal || "nero",
+        seed: v.seed, style: v.style, fx: v.fx || "auto", pal: v.pal || "nero",
         quote: v.calm !== undefined ? [A.CALM[2], A.CALM[11], A.CALM[22], A.CALM[4], A.CALM[15], A.CALM[0], A.CALM[13]][v.calm] : [A.QUOTES[1], A.QUOTES[41], A.QUOTES[36]][v.quote],
         label: v.calm !== undefined ? "Mente calma" : "Regola del mestiere",
         // ciclo continuo: nessuna dissolvenza dal nero, così il blocco schermo non lampeggia mai
