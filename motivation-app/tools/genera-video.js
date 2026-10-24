@@ -10,15 +10,15 @@ const APP = path.resolve(__dirname, "..");
 const OUT = path.join(APP, "videos");
 const FPS = 60;
 const VIDEOS = [
-  { name: "energia-oro", style: "energia", pal: "nero", seed: 11, calm: 4 },
-  { name: "energia-blu", style: "energia", pal: "notte", seed: 23, quote: 2 },
-  { name: "aurora-boreale", style: "aurora", pal: "notte", seed: 5, calm: 1 },
-  { name: "aurora-smeraldo", style: "aurora", pal: "bottiglia", seed: 40, calm: 3 },
+  { name: "scie-di-luce-oro", style: "scie", pal: "nero", seed: 11, calm: 4 },
+  { name: "scie-di-luce-blu", style: "scie", pal: "notte", seed: 3, quote: 2 },
+  { name: "energia-oro", style: "energia", pal: "nero", seed: 11, calm: 1 },
+  { name: "aurora-boreale", style: "aurora", pal: "notte", seed: 5, calm: 3 },
   { name: "palme-controluce", style: "tropici", pal: "nero", seed: 0, calm: 5 },
   { name: "palme-crepuscolo", style: "tropici", pal: "bordeaux", seed: 14, calm: 6 },
-  { name: "palme-viola", style: "tropici", pal: "notte", seed: 28, calm: 0 },
+  { name: "strade-notte", style: "strade", pal: "nero", seed: 7, calm: 0 },
+  { name: "strade-lungolago", style: "strade", pal: "nero", seed: 0, quote: 1 },
   { name: "astronauta", style: "spazio", pal: "notte", seed: 0, calm: 2 },
-  { name: "auto-gtr", style: "strada", pal: "nero", seed: 0, quote: 0 },
   { name: "casa-pioggia", style: "casa", seed: 4242, calm: 0 },
   { name: "pioggia-vetro", style: "vetro", seed: 7, calm: 1 },
 ];

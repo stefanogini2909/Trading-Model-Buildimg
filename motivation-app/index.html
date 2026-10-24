@@ -553,9 +553,11 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     { id: "pietra", name: "Pietra", bg: "#e4e3de", fg: "#161514", accent: "#8a5a1e" }
   ];
   var STYLES = [
+    { id: "scie", name: "Scie di luce" },
     { id: "energia", name: "Flusso di energia" },
     { id: "aurora", name: "Aurora" },
     { id: "tropici", name: "Tropici al tramonto" },
+    { id: "strade", name: "Strade dall'alto" },
     { id: "casa", name: "Casa sotto la pioggia" },
     { id: "vetro", name: "Pioggia sul vetro" },
     { id: "spazio", name: "Spazio" },
@@ -626,7 +628,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var sessions = store.get("sessions", {});           // { "2026-10-24": true }
   var checks = store.get("checks", {});               // { day: [bool...] }
   var wins = store.get("wins", []);                   // [{d, t}]
-  var wpPrefs = Object.assign({ style: "energia", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
+  var wpPrefs = Object.assign({ style: "scie", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
   if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "linea";
   if (!PALETTES.some(function (x) { return x.id === wpPrefs.pal; })) wpPrefs.pal = "nero";
   var quoteOffset = 0;
@@ -800,11 +802,12 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 
   /* ---------- atmosfere: foto e scene animate ---------- */
   var LOOP = 8; // secondi: ogni animazione si ripete senza stacchi
-  var SCENES = ["energia", "aurora", "tropici", "casa", "vetro", "spazio", "strada"];
+  var SCENES = ["scie", "energia", "aurora", "tropici", "strade", "casa", "vetro", "spazio", "strada"];
   var PHOTOS = {
     vetro: ["photos/pioggia-vetro.jpg", "photos/pioggia-auto-notte.jpg", "photos/pioggia-finestrino.jpg"],
     spazio: ["photos/astronauta-iss.jpg", "photos/stazione-alba.jpg", "photos/astronauta-casco.jpg"],
     strada: ["photos/auto-gtr.jpg", "photos/auto-ferrari.jpg", "photos/auto-datsun.jpg"],
+    strade: ["photos/strade-lungolago.jpg", "photos/strade-notte.jpg", "photos/strade-tangenziali.jpg"],
     tropici: ["photos/tropici-controluce.jpg", "photos/tropici-cielo-rosa.jpg", "photos/tropici-crepuscolo.jpg", "photos/tropici-laguna.jpg", "photos/tropici-viola.jpg"]
   };
   var imgCache = {};
@@ -987,7 +990,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   /* ---------- motion design in WebGL: scena, glow multi-raggio, color correction ---------- */
   // Linguaggio di motion "Premium": cicli lenti, nessun rimbalzo, la luce è la protagonista.
   var GL_LOOP = 10;
-  var GL_SCENES = { energia: 0, aurora: 1, tropici: 2, spazio: 3, strada: 4 };
+  var GL_SCENES = { energia: 0, aurora: 1, tropici: 2, spazio: 3, strada: 4, scie: 5, strade: 6 };
+  var PHOTO_MODES = [2, 3, 4, 6];
   // fondo, colore A, colore B, luce piena: uno per ogni tavolozza
   var GL_COLORS = {
     nero: ["#060608", "#d4a95c", "#c0653f", "#fff4de"],
@@ -1004,13 +1008,17 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     notte: { sh: [0.88, 0.96, 1.13], hiA: [0.98, 1.04, 1.10], hiB: [1.07, 1.00, 1.02], sat: 1.06, con: 0.26 },
     pietra: { sh: [0.98, 0.99, 1.02], hiA: [1.04, 1.02, 0.98], hiB: [1.02, 1.02, 1.01], sat: 0.86, con: 0.30 }
   };
-  // per scena: soglia del glow, peso del glow stretto, largo e della scia anamorfica, quanto comprimere le luci
+  // per scena: soglia del glow, pesi del glow stretto, largo e della scia anamorfica, compressione delle luci,
+  // e quanto la color correction interviene: tinta (amt), nitidezza, vividezza, contrasto.
+  // Sulle foto la correzione rende i colori più nitidi e vivi senza cambiarli: la tinta è appena accennata.
   var GLOW = [
-    { thr: 0.14, w: [1.15, 0.95, 0.12], tm: 1.0 },
-    { thr: 0.28, w: [0.85, 0.85, 0.05], tm: 1.0 },
-    { thr: 0.90, w: [0.60, 0.55, 0.25], tm: 0.55 },
-    { thr: 0.93, w: [0.45, 0.40, 0.30], tm: 0.45 },
-    { thr: 0.93, w: [0.40, 0.35, 0.45], tm: 0.45 }
+    { thr: 0.14, w: [1.15, 0.95, 0.12], tm: 1.0, amt: 0.55, sharp: 0.10, vib: 0.20 },
+    { thr: 0.28, w: [0.85, 0.85, 0.05], tm: 1.0, amt: 0.55, sharp: 0.10, vib: 0.20 },
+    { thr: 0.90, w: [0.55, 0.50, 0.22], tm: 0.30, amt: 0.15, sharp: 0.55, vib: 0.30, con: 0.14 },
+    { thr: 0.93, w: [0.40, 0.35, 0.25], tm: 0.25, amt: 0.12, sharp: 0.55, vib: 0.25, con: 0.14 },
+    { thr: 0.93, w: [0.35, 0.30, 0.40], tm: 0.25, amt: 0.12, sharp: 0.60, vib: 0.25, con: 0.14 },
+    { thr: 0.20, w: [1.20, 1.05, 0.40], tm: 1.0, amt: 0.35, sharp: 0.08, vib: 0.15 },
+    { thr: 0.90, w: [0.45, 0.45, 0.30], tm: 0.25, amt: 0.12, sharp: 0.60, vib: 0.30, con: 0.14 }
   ];
   // altezza dell'orizzonte nelle foto tropicali (0 = fondo, 1 = cima): sotto c'è l'acqua che tremola
   var HORIZON = { "photos/tropici-controluce.jpg": 0.0, "photos/tropici-cielo-rosa.jpg": 0.0, "photos/tropici-crepuscolo.jpg": 0.1, "photos/tropici-laguna.jpg": 0.47, "photos/tropici-viola.jpg": 0.0 };
@@ -1079,13 +1087,54 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     "  col += vec3(0.9) * stars(uv, 0.004) * (1.0 - clamp(sum, 0.0, 1.0));",
     "  return col;",
     "}",
+    // una scia: un fascio di filamenti incandescenti lungo una curva a S, con impulsi che la percorrono
+    "vec3 streak(vec2 p, float a1, float f1, float a2, float f2, float ph0, float gain){",
+    "  float ph = ph1() + ph0, y = p.y;",
+    "  float base = a1 * sin(y * f1 + ph) + a2 * sin(y * f2 - 2.0 * ph + 1.0);",
+    "  float slope = a1 * f1 * cos(y * f1 + ph) + a2 * f2 * cos(y * f2 - 2.0 * ph + 1.0);",
+    "  float nrm = inversesqrt(1.0 + slope * slope);",
+    "  vec3 col = vec3(0.0);",
+    "  for (int i = 0; i < 7; i++){",
+    "    float fi = float(i) - 3.0;",
+    // i fili si intrecciano come un nastro che ruota
+    "    float off = fi * 0.012 * (0.65 + 0.55 * sin(y * 5.0 + fi * 0.9 + ph));",
+    "    float d = abs(p.x - base - off) * nrm;",
+    "    float w = 0.0017 + 0.0009 * abs(fi) / 3.0;",
+    "    float line = exp(-d * d / (w * w));",
+    "    float pulse = pow(0.5 + 0.5 * sin(y * 2.6 - 2.0 * ph1() + fi * 0.25 + ph0), 6.0);",
+    "    float k = 1.0 - abs(fi) / 4.5;",
+    "    col += mix(u_a, u_hot, 0.25) * line * (0.55 + 1.6 * pulse) * k;",
+    "    col += u_hot * line * line * pulse * 1.2 * k;",
+    "  }",
+    "  float dc = abs(p.x - base) * nrm;",
+    "  col += mix(u_b, u_a, 0.5) * exp(-dc * dc / 0.003) * 0.22;",
+    "  return col * gain;",
+    "}",
+    "vec3 lightStreaks(vec2 p, vec2 uv){",
+    "  vec3 col = u_bg;",
+    // tappeto di particelle in prospettiva: scorre di quattro file a ciclo, quindi il loop torna identico
+    "  float hz = 0.47;",
+    "  if (uv.y < hz) {",
+    "    float depth = 0.12 / (hz - uv.y + 0.02);",
+    "    vec2 w = vec2((uv.x - 0.5) * depth * 40.0, depth * 14.0 + 4.0 * u_t / u_loop + u_seed);",
+    "    float wave = 0.5 + 0.5 * sin(w.x * 0.35 + w.y * 0.6 + ph1()) * sin(w.x * 0.17 - w.y * 0.31 - ph1());",
+    "    vec2 cell = fract(w) - 0.5;",
+    "    float r = 0.08 + 0.07 * wave;",
+    "    float dotv = smoothstep(r, r * 0.25, length(cell));",
+    "    float fade = smoothstep(hz, hz - 0.14, uv.y) * smoothstep(-0.05, 0.25, uv.y);",
+    "    col += mix(u_b * 0.6, u_a, wave) * dotv * (0.2 + 1.1 * wave * wave) * fade * 1.15;",
+    "  }",
+    "  col += streak(p, 0.22, 2.1, 0.10, 4.3, u_seed, 1.0);",
+    "  col += streak(p * vec2(-1.0, 1.0) + vec2(0.05, 0.0), 0.16, 1.6, 0.07, 3.7, 2.4 + u_seed, 0.45);",
+    "  return col;",
+    "}",
     "vec3 tex(vec2 uv){ return u_hasTex > 0.5 ? texture2D(u_tex, uv).rgb : u_bg; }",
     "vec3 photo(vec2 uv){",
     "  float asp = u_res.x / u_res.y;",
     "  float water = u_horizon > 0.02 ? smoothstep(u_horizon + 0.01, u_horizon - 0.06, uv.y) : 0.0;",
     "  vec2 d = vec2(fbm3(uv * vec2(5.0, 16.0) + cyc(0.5, 0.0)), fbm3(uv * vec2(5.0, 16.0) + 3.3 + cyc(0.5, 1.5))) - 0.5;",
     // spinta lenta in avanti, come una carrellata
-    "  float z = 1.03 + 0.02 * (0.5 - 0.5 * cos(ph1()));",
+    "  float z = 1.015 + 0.015 * (0.5 - 0.5 * cos(ph1()));",
     "  vec2 tuv = (uv + d * 0.010 * water - 0.5) / z + 0.5;",
     "  vec3 c = tex(tuv);",
     "  float l = luma(c);",
@@ -1119,6 +1168,16 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     // una luce calda che attraversa la scena, come un light leak
     "    float sweep = exp(-pow((uv.x + uv.y * 0.6 - mod(u_t / u_loop * 2.6, 2.6) + 0.5) * 3.0, 2.0));",
     "    c += u_a * sweep * 0.18;",
+    "  } else if (u_mode == 6) {",
+    // strade dall'alto: le luci della città respirano, una luce morbida attraversa la scena in diagonale
+    // respirano solo i punti luce: pixel più luminosi dei vicini (finestre, lampioni), non il cielo
+    "    vec2 o4 = 4.0 / u_res;",
+    "    float around = (luma(tex(tuv + vec2(o4.x, 0.0))) + luma(tex(tuv - vec2(o4.x, 0.0))) + luma(tex(tuv + vec2(0.0, o4.y))) + luma(tex(tuv - vec2(0.0, o4.y)))) * 0.25;",
+    "    float point = smoothstep(0.06, 0.25, l - around);",
+    "    float tw = hash(floor(uv * u_res / 5.0));",
+    "    c += c * point * 0.8 * (0.5 + 0.5 * sin(2.0 * ph1() + tw * 6.2831853));",
+    "    float sweep = exp(-pow((uv.x * 0.8 + uv.y - mod(u_t / u_loop * 2.6, 2.6) + 0.4) * 3.2, 2.0));",
+    "    c += mix(u_hot, vec3(1.0, 0.8, 0.55), 0.5) * sweep * 0.10 * (0.4 + l);",
     "  } else {",
     // una scia di luce orizzontale che scorre sulla carrozzeria
     "    float f = mod(u_t / u_loop, 1.0);",
@@ -1131,11 +1190,11 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     "void main(){",
     "  vec2 uv = v_uv;",
     "  vec3 col;",
-    "  if (u_mode >= 2) col = photo(uv);",
-    "  else {",
-    "    vec2 p = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0) * 2.0;",
-    "    col = u_mode == 1 ? aurora(p, uv) : energy(p);",
-    "  }",
+    "  vec2 p = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0) * 2.0;",
+    "  if (u_mode == 0) col = energy(p);",
+    "  else if (u_mode == 1) col = aurora(p, uv);",
+    "  else if (u_mode == 5) col = lightStreaks(p, uv);",
+    "  else col = photo(uv);",
     "  gl_FragColor = vec4(col * u_enc, 1.0);",
     "}"
   ].join("\n");
@@ -1168,26 +1227,36 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     "  gl_FragColor = vec4(c, 1.0);",
     "}"
   ].join("\n");
-  // composizione e color correction, nell'ordine: esposizione, compressione delle luci, saturazione, contrasto, split-toning, vignettatura, grana
+  // composizione e color correction, nell'ordine: nitidezza, glow, esposizione, compressione delle luci,
+  // vividezza (alza i colori spenti più di quelli già saturi, le tinte restano le loro), contrasto, tinta dosata, vignettatura, grana
   var FRAG_FINAL = GLSL_COMMON + "\n" + [
     "uniform sampler2D u_scene; uniform sampler2D u_b1; uniform sampler2D u_b2; uniform sampler2D u_b3;",
     "uniform float u_dec; uniform vec3 u_w; uniform float u_tm; uniform float u_intro; uniform float u_t; uniform float u_loop; uniform vec2 u_res;",
     "uniform vec3 u_sh; uniform vec3 u_hiA; uniform vec3 u_hiB; uniform float u_sat; uniform float u_con;",
+    "uniform float u_amt; uniform float u_sharp; uniform float u_vib;",
     "void main(){",
+    "  vec2 px = 1.0 / u_res;",
     "  vec3 c = texture2D(u_scene, v_uv).rgb * u_dec;",
+    "  vec3 nb = (texture2D(u_scene, v_uv + vec2(px.x * 1.5, 0.0)).rgb + texture2D(u_scene, v_uv - vec2(px.x * 1.5, 0.0)).rgb",
+    "          + texture2D(u_scene, v_uv + vec2(0.0, px.y * 1.5)).rgb + texture2D(u_scene, v_uv - vec2(0.0, px.y * 1.5)).rgb) * 0.25 * u_dec;",
+    // nitidezza solo sui bordi veri: le piccole differenze (rumore della foto, cielo) restano lisce
+    "  vec3 detail = c - nb;",
+    "  float edge = smoothstep(0.015, 0.06, length(detail));",
+    "  c = max(c + detail * u_sharp * 2.0 * edge, 0.0);",
     "  vec3 bloom = (texture2D(u_b1, v_uv).rgb * u_w.x + texture2D(u_b2, v_uv).rgb * u_w.y + texture2D(u_b3, v_uv).rgb * u_w.z) * u_dec;",
-    // apertura: l'immagine si espone dal nero mentre il glow si posa
     "  float e = u_intro;",
-    "  c = (c + bloom * mix(2.4, 1.0, e)) * mix(0.0, 1.0, e);",
+    "  c = (c + bloom * mix(2.4, 1.0, e)) * e;",
     "  c = mix(c, 1.0 - exp(-c * 1.35), u_tm);",
     "  c = clamp(c, 0.0, 1.0);",
     "  float l = luma(c);",
-    "  c = mix(vec3(l), c, u_sat);",
+    "  float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));",
+    "  c = mix(vec3(l), c, u_sat * (1.0 + u_vib * (1.0 - sat)));",
+    "  c = clamp(c, 0.0, 1.0);",
     "  c = mix(c, c * c * (3.0 - 2.0 * c), u_con);",
     "  float drift = 0.5 - 0.5 * cos(6.2831853 * u_t / u_loop);",
-    "  c *= mix(u_sh, mix(u_hiA, u_hiB, drift), smoothstep(0.05, 0.85, l));",
-    "  c *= 1.0 - 0.42 * pow(length((v_uv - 0.5) * vec2(1.0, 0.72)), 2.2);",
-    "  c += (hash(v_uv * u_res + fract(u_t * 13.0)) - 0.5) / 160.0;",
+    "  c *= mix(vec3(1.0), mix(u_sh, mix(u_hiA, u_hiB, drift), smoothstep(0.05, 0.85, l)), u_amt);",
+    "  c *= 1.0 - (0.18 + 0.24 * u_amt) * pow(length((v_uv - 0.5) * vec2(1.0, 0.72)), 2.2);",
+    "  c += (hash(v_uv * u_res + fract(u_t * 13.0)) - 0.5) / (180.0 + 200.0 * (1.0 - u_amt));",
     "  gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);",
     "}"
   ].join("\n");
@@ -1216,7 +1285,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     this.ps = prog(FRAG_SCENE, ["res", "t", "loop", "mode", "seed", "enc", "bg", "a", "b", "hot", "tex", "hasTex", "horizon", "sun"]);
     this.pb = prog(FRAG_BRIGHT, ["src", "texel", "dec", "enc", "thr"]);
     this.pl = prog(FRAG_BLUR, ["src", "dir"]);
-    this.pf = prog(FRAG_FINAL, ["scene", "b1", "b2", "b3", "dec", "w", "tm", "intro", "t", "loop", "res", "sh", "hiA", "hiB", "sat", "con"]);
+    this.pf = prog(FRAG_FINAL, ["scene", "b1", "b2", "b3", "dec", "w", "tm", "intro", "t", "loop", "res", "sh", "hiA", "hiB", "sat", "con", "amt", "sharp", "vib"]);
     if (!this.ps || !this.pb || !this.pl || !this.pf) return;
     var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -1270,13 +1339,13 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   // intro: 0 = nero, 1 = immagine piena
   GLView.prototype.draw = function (o, t, intro) {
     if (!this.ok || !this.ensureTargets()) return;
-    var gl = this.gl, T = this.T, mode = GL_SCENES[sceneOf(o)] || 0, cfg = GLOW[mode];
+    var gl = this.gl, T = this.T, mode = GL_SCENES[sceneOf(o)] || 0, cfg = GLOW[mode], isPhoto = PHOTO_MODES.indexOf(mode) >= 0;
     var col = GL_COLORS[o.pal] || GL_COLORS.nero, gr = GRADES[o.pal] || GRADES.nero;
     var tt = ((t % GL_LOOP) + GL_LOOP) % GL_LOOP, P, u;
     // 1. scena
     P = this.ps; u = P.u; this.pass(P, T.scene);
     var src = photoOf(o), rec = src && imgCache[src];
-    if (mode >= 2 && rec && rec.ok && this.texSrc !== src) {
+    if (isPhoto && rec && rec.ok && this.texSrc !== src) {
       this.bind(0, this.photo);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, rec.img);
@@ -1285,7 +1354,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     }
     this.bind(0, this.photo);
     gl.uniform1i(u.tex, 0);
-    gl.uniform1f(u.hasTex, mode >= 2 && this.texSrc === src ? 1 : 0);
+    gl.uniform1f(u.hasTex, isPhoto && this.texSrc === src ? 1 : 0);
     gl.uniform2f(u.res, this.canvas.width, this.canvas.height);
     gl.uniform1f(u.t, tt); gl.uniform1f(u.loop, GL_LOOP);
     gl.uniform1i(u.mode, mode); gl.uniform1f(u.seed, (o.seed % 997) / 97); gl.uniform1f(u.enc, this.enc);
@@ -1314,7 +1383,9 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     gl.uniform1f(u.dec, 1 / this.enc); gl.uniform3fv(u.w, cfg.w); gl.uniform1f(u.tm, cfg.tm);
     gl.uniform1f(u.intro, intro == null ? 1 : intro); gl.uniform1f(u.t, tt); gl.uniform1f(u.loop, GL_LOOP);
     gl.uniform2f(u.res, this.canvas.width, this.canvas.height);
-    gl.uniform3fv(u.sh, gr.sh); gl.uniform3fv(u.hiA, gr.hiA); gl.uniform3fv(u.hiB, gr.hiB); gl.uniform1f(u.sat, gr.sat); gl.uniform1f(u.con, gr.con);
+    gl.uniform3fv(u.sh, gr.sh); gl.uniform3fv(u.hiA, gr.hiA); gl.uniform3fv(u.hiB, gr.hiB);
+    gl.uniform1f(u.sat, isPhoto ? 1 : gr.sat); gl.uniform1f(u.con, cfg.con != null ? cfg.con : gr.con);
+    gl.uniform1f(u.amt, cfg.amt); gl.uniform1f(u.sharp, cfg.sharp); gl.uniform1f(u.vib, cfg.vib);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   };
   // dove sta il sole in una foto: il baricentro dei pixel più luminosi nella metà alta

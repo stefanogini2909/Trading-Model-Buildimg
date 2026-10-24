@@ -18,5 +18,8 @@ Tutte le foto sono ritagliate a 1170×2532 per il telefono. Nessuna è dell'auto
 | tropici-crepuscolo.jpg | WordPress Photo Directory — https://pd.w.org/2026/04/67169e17b717db0b1.50744450-1536x2048.jpg | CC0 |
 | tropici-laguna.jpg | WordPress Photo Directory — https://pd.w.org/2023/05/667646af525cbbb64.14841306-1536x2048.jpg | CC0 |
 | tropici-viola.jpg | WordPress Photo Directory — https://pd.w.org/2022/06/40062b46f2b326492.78897832-1536x2048.jpg | CC0 |
+| strade-lungolago.jpg | WordPress Photo Directory — https://pd.w.org/2024/09/36366e1c26def5427.31411328-1522x2048.jpg | CC0 |
+| strade-notte.jpg | WordPress Photo Directory — https://pd.w.org/2025/03/80767c3db5479f4a2.42333059-1536x2048.jpg | CC0 |
+| strade-tangenziali.jpg | WordPress Photo Directory — https://pd.w.org/2025/12/423693d11db27d2c7.87470328-1536x2048.jpeg | CC0 |
 
-Flusso di energia, Aurora e Casa sotto la pioggia sono generati in codice dall'app.
+Scie di luce, Flusso di energia, Aurora e Casa sotto la pioggia sono generati in codice dall'app.

@@ -1,5 +1,5 @@
 // Cache dell'app per l'uso offline: prima la rete, poi la cache se non c'è connessione.
-const CACHE = "edge-v5";
+const CACHE = "edge-v6";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 self.addEventListener("install", (e) => {
