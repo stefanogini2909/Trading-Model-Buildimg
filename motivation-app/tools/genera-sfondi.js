@@ -15,20 +15,20 @@ const COUNT = parseInt(process.argv[2] || "21", 10);
   await page.goto("file://" + path.join(APP, "index.html"));
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all([
-    document.fonts.load("800 100px 'Big Shoulders Display'"),
-    document.fonts.load("500 30px 'IBM Plex Mono'"),
+    document.fonts.load("400 100px 'Instrument Serif'"),
+    document.fonts.load("500 36px 'Instrument Sans'"),
   ]).catch(() => {}));
 
   for (let i = 0; i < COUNT; i++) {
     const data = await page.evaluate((i) => {
       const A = window.EdgeApp;
-      const darkPals = A.PALETTES.filter((p) => p.id !== "alba");
+      const darkPals = A.PALETTES.filter((p) => p.id !== "pietra");
       return A.render({
         seed: 1000 + i * 7919,
         style: A.STYLES[i % A.STYLES.length].id,
         pal: darkPals[i % darkPals.length].id,
         quote: A.QUOTES[(i * 5) % A.QUOTES.length],
-        label: "REGOLA DEL MESTIERE",
+        label: "Regola del mestiere",
         date: null,
         why: false,
         streak: false,

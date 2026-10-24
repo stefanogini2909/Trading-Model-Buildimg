@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edge Quotidiano</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#0d1519">
+<meta name="theme-color" content="#0e0d0c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Edge">
@@ -14,23 +14,25 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
 <style>
-/* Layout: app a una colonna per il telefono, barra schede fissa in basso, una schermata alla volta. Look scuro "terminale di notte". */
+/* Layout: una colonna da telefono su nero caldo. Profondità solo per passi di tono, niente linee decorative,
+   niente sfumature. Il serif porta la voce di chi sei; il sans fa tutto il resto. L'ottone tocca solo i dati. */
 :root {
-  --bg: #0d1519;
-  --surface: #142128;
-  --surface-2: #1b2b33;
-  --line: #263a44;
-  --fg: #e9efec;
-  --muted: #8ea19c;
-  --accent: #e8b04a;
-  --accent-ink: #1a1206;
-  --up: #4fb3a3;
-  --down: #d9705a;
-  --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
-  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ground: #0e0d0c;
+  --surface: #181715;
+  --raised: #23211e;
+  --border: #2a2825;
+  --control: #45423d;
+  --text: #f5f2ec;
+  --muted: #b5b0a7;
+  --faint: #97928a;
+  --accent: #d4a95c;
+  --positive: #8cc9a0;
+  --negative: #e8705f;
+  --serif: "Instrument Serif", "Iowan Old Style", "Palatino", Georgia, serif;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r-card: 20px;
   color-scheme: dark;
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -38,223 +40,196 @@
 html, body { height: 100%; }
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 15px/1.5 var(--body);
+  background: var(--ground);
+  color: var(--text);
+  font: 15px/1.5 var(--sans);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 [hidden] { display: none !important; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.num { font-variant-numeric: tabular-nums; }
 
 .app {
-  max-width: 560px;
+  max-width: 520px;
   margin: 0 auto;
   min-height: 100%;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 18px calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 16px calc(104px + env(safe-area-inset-bottom, 0px));
 }
-.screen { display: flex; flex-direction: column; gap: 20px; }
+.screen { display: flex; flex-direction: column; gap: 32px; }
+.group { display: flex; flex-direction: column; gap: 12px; }
 
-/* intestazione */
-.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.brand { font: 800 26px/1 var(--display); letter-spacing: .02em; text-transform: uppercase; }
-.brand b { color: var(--accent); font-weight: 800; }
-.label { font: 500 11px/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-
-/* stato mercati */
-.markets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.mkt { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.mkt .row { display: flex; align-items: center; gap: 8px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
-.dot.open { background: var(--up); box-shadow: 0 0 0 4px color-mix(in srgb, var(--up) 22%, transparent); }
-.dot.pre { background: var(--accent); }
-.mkt strong { font: 600 14px/1.2 var(--body); }
-.mkt span.t { font: 500 12px/1.3 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-
-/* citazione del giorno */
-.quote {
-  position: relative;
-  padding: 26px 22px 22px;
-  border-radius: 16px;
-  background:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
-    var(--surface);
-  overflow: hidden;
-}
-.quote canvas.spark { position: absolute; inset: auto 0 0 0; width: 100%; height: 70px; opacity: .5; pointer-events: none; }
-.quote p {
-  position: relative;
-  margin: 10px 0 24px;
-  font: 800 clamp(30px, 8.6vw, 44px)/1.02 var(--display);
-  text-wrap: balance;
-}
-.quote .actions { position: relative; display: flex; gap: 10px; flex-wrap: wrap; }
-
-.btn {
-  border: 1px solid var(--line);
-  background: var(--surface-2);
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-weight: 500;
-}
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-.btn.danger { background: transparent; border-color: color-mix(in srgb, var(--down) 60%, transparent); color: var(--down); }
-.btn:active { transform: translateY(1px); }
-
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
-.stat .n { font: 800 44px/1 var(--display); font-variant-numeric: tabular-nums; }
-.stat .n small { font: 500 13px var(--mono); color: var(--muted); margin-left: 4px; }
-
-.me-card {
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
-  border-radius: 16px; padding: 20px;
-  display: flex; flex-direction: column; gap: 16px;
-  background: color-mix(in srgb, var(--accent) 5%, var(--bg));
-}
-.me-card .id { margin: 0; font: 800 26px/1.08 var(--display); text-wrap: balance; }
-.me-card .kv { display: flex; flex-direction: column; gap: 4px; }
-.me-card .kv p { margin: 0; color: color-mix(in srgb, var(--fg) 85%, transparent); }
-.me-card .kv p.why { font-style: italic; }
-.chip.pick { text-align: left; padding: 10px 14px; border-radius: 12px; font-size: 14px; }
-.chip.pick[aria-pressed="true"]::before { content: "✓"; color: var(--accent); font-weight: 600; }
-.add-row { display: flex; gap: 8px; }
-.add-row input { flex: 1; min-width: 0; }
-.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
-.gallery button { padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); aspect-ratio: 1170 / 2532; }
-.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.panel { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 14px; }
-.steps b { color: var(--fg); font-weight: 500; }
-@keyframes peak { 0% { transform: scale(.96); box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 60%, transparent); } 60% { transform: scale(1.01); box-shadow: 0 0 0 14px transparent; } 100% { transform: none; } }
-.approved.peak { animation: peak .7s ease-out; }
-
-h2 { font: 800 30px/1.05 var(--display); text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+/* testata */
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; }
+.brand { font: 400 24px/1 var(--serif); letter-spacing: -0.01em; }
+.meta { color: var(--faint); font-size: 14px; }
+h2 { font: 600 24px/1.2 var(--sans); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.label { color: var(--faint); font-size: 13px; line-height: 1.4; }
 .lead { margin: 0; color: var(--muted); max-width: 60ch; }
+.hint { font-size: 13px; color: var(--faint); margin: 0; }
+
+/* identità: il cuore della schermata Oggi */
+.hero { display: flex; flex-direction: column; gap: 20px; padding-top: 8px; }
+.greet { margin: 0; font: 500 16px/1.4 var(--sans); color: var(--muted); }
+.id { margin: 0; font: 400 34px/1.08 var(--serif); letter-spacing: -0.01em; text-wrap: balance; }
+.facts { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.facts div { display: flex; flex-direction: column; gap: 2px; }
+.facts dt { color: var(--faint); font-size: 13px; }
+.facts dd { margin: 0; font-size: 16px; }
+.facts dd.why { font: italic 400 19px/1.35 var(--serif); color: var(--muted); }
+
+/* numeri: un solo contenitore diviso, nessuna piastrella */
+.strip { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border-radius: var(--r-card); }
+.strip > div { padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+.strip > div + div { border-left: 1px solid var(--border); }
+.strip .v { font: 500 30px/1.1 var(--sans); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.strip .v.accent { color: var(--accent); }
+
+/* regola del giorno */
+.rule-card { background: var(--surface); border-radius: var(--r-card); padding: 22px 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+.rule-card p { margin: 0; font: 400 26px/1.15 var(--serif); text-wrap: balance; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* liste a righe (mercati, diario) */
+.rows { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--r-card); }
+.rows li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; min-height: 56px; }
+.rows li + li { border-top: 1px solid var(--border); }
+.rows .name { display: flex; align-items: center; gap: 10px; }
+.rows .val { color: var(--muted); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--control); flex: none; }
+.dot.open { background: var(--positive); }
+.dot.pre { background: var(--accent); }
+
+/* bottoni: pillole piatte; il primario è invertito */
+.btn {
+  min-height: 44px; padding: 0 18px;
+  border: 1px solid var(--control); background: transparent;
+  border-radius: 999px; font-weight: 500; font-size: 15px;
+}
+.btn.primary { background: var(--text); color: var(--ground); border-color: var(--text); }
+.btn.quiet { border-color: transparent; color: var(--muted); padding: 0 12px; }
+.btn.danger { border-color: var(--border); color: var(--negative); width: 100%; }
+.btn:active { opacity: .85; }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* sfondi */
-.wp-wrap { display: flex; justify-content: center; }
-#wpCanvas {
-  height: min(58vh, 520px);
-  max-width: 100%;
-  aspect-ratio: 1170 / 2532;
-  border-radius: 22px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: 0 20px 50px -20px #000;
-}
+.wp-wrap { display: flex; justify-content: center; background: var(--surface); border-radius: var(--r-card); padding: 20px; }
+#wpCanvas { height: min(56vh, 500px); max-width: 100%; aspect-ratio: 1170 / 2532; border-radius: 26px; background: var(--raised); }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip {
-  border: 1px solid var(--line);
-  background: transparent;
-  border-radius: 999px;
-  padding: 7px 13px;
-  font-size: 13px;
-  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 40px; padding: 0 16px; border: 1px solid var(--border); background: transparent;
+  border-radius: 999px; font-size: 14px; color: var(--muted);
+  display: inline-flex; align-items: center; gap: 8px;
 }
-.chip[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
-.swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #ffffff33; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.toggle { display: flex; align-items: center; gap: 10px; }
-.toggle input { width: 20px; height: 20px; accent-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--ground); border-color: var(--text); }
+.swatch { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px #ffffff26; }
+.chip.pick { min-height: 44px; padding: 10px 16px; text-align: left; line-height: 1.35; border-radius: 22px; }
+.toggle { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.toggle input { width: 20px; height: 20px; accent-color: var(--text); }
 select, input[type="text"], textarea {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 14px; width: 100%; min-height: 48px;
 }
-textarea { min-height: 96px; resize: vertical; }
-.row-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-.hint { font-size: 13px; color: var(--muted); margin: 0; }
+input::placeholder, textarea::placeholder { color: var(--faint); }
+textarea { min-height: 96px; resize: vertical; line-height: 1.45; }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; min-width: 0; }
+.panel { background: var(--surface); border-radius: var(--r-card); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.panel h2 { font: 400 28px/1.1 var(--serif); letter-spacing: -0.01em; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.gallery:empty { display: none; }
+.gallery button { padding: 0; border: 0; border-radius: 14px; overflow: hidden; background: var(--raised); aspect-ratio: 1170 / 2532; }
+.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 14px; }
+.steps b { color: var(--text); font-weight: 500; }
 
 /* rituale */
-.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.checklist li + li { border-top: 1px solid var(--line); }
-.checklist label { display: flex; gap: 12px; align-items: center; padding: 13px 14px; cursor: pointer; }
-.checklist input { width: 22px; height: 22px; accent-color: var(--up); flex: none; }
-.checklist input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--up); }
-.meter { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
-.meter i { display: block; height: 100%; width: 0; background: var(--up); transition: width .3s; }
-.approved { border: 1px solid var(--up); background: color-mix(in srgb, var(--up) 12%, transparent); border-radius: 12px; padding: 14px; }
-.approved strong { font: 800 22px/1.1 var(--display); text-transform: uppercase; color: var(--up); display: block; }
-.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.log li { display: grid; grid-template-columns: 52px 1fr; gap: 10px; font-size: 14px; }
-.log time { font: 500 12px/1.6 var(--mono); color: var(--muted); }
-.week { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
-.week div { aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); display: grid; place-items: center; font: 500 10px var(--mono); color: var(--muted); }
-.week div.ok { background: var(--up); color: #062420; }
+.meter { height: 4px; background: var(--raised); border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.checklist { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--r-card); }
+.checklist li + li { border-top: 1px solid var(--border); }
+.checklist label { display: flex; gap: 14px; align-items: center; padding: 14px 20px; min-height: 56px; cursor: pointer; }
+.checklist input { width: 22px; height: 22px; accent-color: var(--text); flex: none; }
+.checklist input:checked + span { color: var(--faint); }
+.approved { background: var(--surface); border-radius: var(--r-card); padding: 20px; display: flex; flex-direction: column; gap: 4px; }
+.approved strong { font: 400 28px/1.1 var(--serif); color: var(--accent); }
+.approved span { color: var(--muted); }
+@keyframes peak { 0% { transform: scale(.97); opacity: .4; } 100% { transform: none; opacity: 1; } }
+.approved.peak { animation: peak .5s cubic-bezier(.2,.8,.2,1); }
+.week { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+.week div { aspect-ratio: 1; border-radius: 8px; background: var(--surface); display: grid; place-items: center; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.week div.ok { background: var(--accent); color: var(--ground); font-weight: 600; }
+.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.log li { display: grid; grid-template-columns: 48px 1fr; gap: 12px; font-size: 15px; }
+.log time { color: var(--faint); font-size: 13px; line-height: 1.7; font-variant-numeric: tabular-nums; }
 
-/* barra schede */
+/* barra schede: opaca, nessun vetro; la scheda attiva si accende soltanto */
 nav.tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--line);
+  background: var(--ground);
+  border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: max(8px, env(safe-area-inset-left, 0px));
   padding-right: max(8px, env(safe-area-inset-right, 0px));
 }
-nav.tabs .in { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+nav.tabs .in { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
 nav.tabs button {
-  background: none; border: 0; padding: 10px 4px 12px;
+  background: none; border: 0; min-height: 56px; padding: 8px 4px 10px;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  color: var(--muted); font-size: 12px;
+  color: var(--faint); font-size: 12px; font-weight: 500;
 }
-nav.tabs button[aria-selected="true"] { color: var(--accent); }
-nav.tabs svg { width: 22px; height: 22px; }
+nav.tabs button[aria-selected="true"] { color: var(--text); }
+nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 
-/* overlay */
+/* sovrapposizioni */
 .overlay {
-  position: fixed; inset: 0; z-index: 50;
-  background: var(--bg);
-  display: flex; flex-direction: column;
-  overflow-y: auto;
+  position: fixed; inset: 0; z-index: 50; background: var(--ground);
+  display: flex; flex-direction: column; overflow-y: auto;
   padding-top: calc(24px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
 }
-.overlay .in { max-width: 520px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; align-items: stretch; }
-.breath { width: 190px; height: 190px; margin: 6px auto; position: relative; display: grid; place-items: center; }
+.overlay .in { max-width: 480px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.overlay .label { font-size: 15px; color: var(--muted); }
+.breath { width: 180px; height: 180px; margin: 8px auto; position: relative; display: grid; place-items: center; }
 .breath::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--up) 45%, transparent), color-mix(in srgb, var(--up) 8%, transparent) 70%);
+  background: var(--raised);
   transform: scale(var(--s, .55));
   transition: transform var(--d, 4s) ease-in-out;
 }
-.breath span { position: relative; font: 800 26px var(--display); text-transform: uppercase; letter-spacing: .04em; }
-.crisis-msg { font: 600 22px/1.25 var(--body); margin: 0; text-wrap: balance; }
-.timer { font: 800 64px/1 var(--display); font-variant-numeric: tabular-nums; text-align: center; color: var(--accent); }
+.breath span { position: relative; font: 400 26px var(--serif); }
+.crisis-msg { font: 400 28px/1.15 var(--serif); margin: 0; text-wrap: balance; }
+.timer { font: 400 64px/1 var(--serif); font-variant-numeric: tabular-nums; text-align: center; color: var(--accent); }
 
 .fs { position: fixed; inset: 0; z-index: 60; background: #000; }
 .fs img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-touch-callout: default; user-select: auto; }
 .fs .fs-hint {
   position: absolute; left: 50%; transform: translateX(-50%);
   bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-  width: min(92%, 420px);
-  background: #000c; color: #fff; border-radius: 12px; padding: 12px 14px;
-  font-size: 13px; text-align: center; transition: opacity .6s;
+  width: min(92%, 420px); background: #1d1c1a; color: #f5f2ec; border-radius: 16px; padding: 12px 16px;
+  font-size: 14px; text-align: center; transition: opacity .6s;
 }
 .fs .fs-close {
   position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
-  background: #000a; color: #fff; border: 1px solid #ffffff44; border-radius: 999px; padding: 8px 14px; transition: opacity .6s;
+  background: #1d1c1a; color: #f5f2ec; border: 0; border-radius: 999px; min-height: 44px; padding: 0 18px; transition: opacity .6s;
 }
 .fs.clean .fs-hint, .fs.clean .fs-close { opacity: 0; }
 
 .toast {
   position: fixed; left: 50%; transform: translateX(-50%); z-index: 70;
-  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
-  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 500; font-size: 14px;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  background: var(--text); color: var(--ground); padding: 12px 18px; border-radius: 999px; font-weight: 500; font-size: 14px;
+  max-width: calc(100% - 40px); text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .breath::before { transition: none; }
-  .meter i, .fs .fs-hint, .fs .fs-close { transition: none; }
+  .breath::before, .meter i, .fs .fs-hint, .fs .fs-close { transition: none; }
   .approved.peak { animation: none; }
 }
 </style>
@@ -264,60 +239,67 @@ nav.tabs svg { width: 22px; height: 22px; }
 
   <!-- OGGI -->
   <section class="screen" id="tab-oggi">
-    <div class="top">
-      <div class="brand">Edge <b>Quotidiano</b></div>
-      <div class="label" id="todayLabel"></div>
-    </div>
+    <header class="top">
+      <span class="brand">Edge</span>
+      <span class="meta" id="todayLabel"></span>
+    </header>
 
-    <div class="markets" aria-label="Stato dei mercati">
-      <div class="mkt"><div class="row"><i class="dot" id="dotMil"></i><strong>Borsa Italiana</strong></div><span class="t" id="mktMil"></span></div>
-      <div class="mkt"><div class="row"><i class="dot" id="dotNy"></i><strong>New York</strong></div><span class="t" id="mktNy"></span></div>
-    </div>
-
-    <article class="me-card" id="meCard">
-      <div class="kv"><span class="label">Ricordati chi sei</span><p class="id" id="meId"></p></div>
-      <div class="kv" id="meWantRow"><span class="label">Cosa vuoi dalla tua carriera</span><p id="meWant"></p></div>
-      <div class="kv" id="meWhyRow"><span class="label">Il tuo perché</span><p class="why" id="meWhy"></p></div>
+    <section class="hero" id="meCard" aria-label="Chi sei">
+      <h1 class="greet" id="greet">Buongiorno.</h1>
+      <p class="id" id="meId"></p>
+      <dl class="facts">
+        <div id="meWantRow"><dt>Cosa vuoi dalla tua carriera</dt><dd id="meWant"></dd></div>
+        <div id="meWhyRow"><dt>Il tuo perché</dt><dd class="why" id="meWhy"></dd></div>
+      </dl>
       <div class="row-btns"><button class="btn" id="btnMeEdit" type="button">Scrivi chi sei</button></div>
-    </article>
+    </section>
 
-    <article class="quote">
-      <canvas class="spark" id="spark" aria-hidden="true"></canvas>
-      <div class="label" id="quoteLabel">Regola del giorno</div>
+    <div class="strip" aria-label="La tua disciplina">
+      <div><span class="label">Giorni di fila</span><span class="v accent" id="streakN">0</span></div>
+      <div><span class="label">Sessioni rispettate</span><span class="v" id="totalN">0</span></div>
+    </div>
+
+    <article class="rule-card">
+      <span class="label" id="quoteLabel">Regola del giorno</span>
       <p id="quoteText"></p>
       <div class="actions">
-        <button class="btn" id="btnNextQuote" type="button">Un'altra</button>
         <button class="btn primary" id="btnQuoteWp" type="button">Fanne uno sfondo</button>
+        <button class="btn quiet" id="btnNextQuote" type="button">Un'altra</button>
       </div>
     </article>
 
-    <div class="stats">
-      <div class="stat"><span class="label">Giorni di disciplina</span><span class="n"><span id="streakN">0</span><small>di fila</small></span></div>
-      <div class="stat"><span class="label">Sessioni rispettate</span><span class="n"><span id="totalN">0</span><small>totali</small></span></div>
+    <div class="group">
+      <span class="label">Mercati</span>
+      <ul class="rows" aria-label="Stato dei mercati">
+        <li><span class="name"><i class="dot" id="dotMil"></i>Borsa Italiana</span><span class="val" id="mktMil"></span></li>
+        <li><span class="name"><i class="dot" id="dotNy"></i>New York</span><span class="val" id="mktNy"></span></li>
+      </ul>
     </div>
-
 
     <button class="btn danger" id="btnCrisis" type="button">Ho appena perso un trade</button>
   </section>
 
   <!-- SFONDI -->
   <section class="screen" id="tab-sfondi" hidden>
-    <div class="top"><h2>Sfondi</h2><span class="label">1170 × 2532</span></div>
-    <div class="wp-wrap"><canvas id="wpCanvas" width="1170" height="2532" aria-label="Anteprima dello sfondo"></canvas></div>
-
-    <div class="row-btns">
-      <button class="btn primary" id="btnNewWp" type="button">Nuovo sfondo</button>
-      <button class="btn" id="btnFull" type="button">Schermo intero</button>
-      <button class="btn" id="btnSave" type="button" hidden>Salva / condividi</button>
+    <header class="top"><h2>Sfondi</h2><span class="meta num">1170 × 2532</span></header>
+    <div class="group">
+      <div class="wp-wrap"><canvas id="wpCanvas" width="1170" height="2532" aria-label="Anteprima dello sfondo"></canvas></div>
+      <div class="row-btns">
+        <button class="btn primary" id="btnNewWp" type="button">Nuovo sfondo</button>
+        <button class="btn" id="btnFull" type="button">Schermo intero</button>
+        <button class="btn" id="btnSave" type="button" hidden>Salva o condividi</button>
+      </div>
+      <p class="hint" id="saveHint">Per salvarlo apri "Schermo intero" e tieni premuto sull'immagine, oppure fai uno screenshot quando i suggerimenti spariscono.</p>
     </div>
-    <p class="hint" id="saveHint">Per salvarlo: apri "Schermo intero", tieni premuto sull'immagine e scegli "Salva", oppure fai uno screenshot quando i suggerimenti spariscono.</p>
 
-    <div class="field"><span class="label">Frasi</span><div class="chips" id="srcChips"></div></div>
-    <div class="field"><span class="label">Stile</span><div class="chips" id="styleChips"></div></div>
-    <div class="field"><span class="label">Colori</span><div class="chips" id="palChips"></div></div>
-    <label class="toggle"><input type="checkbox" id="optWhy" checked><span>Metti il mio "perché" sullo sfondo</span></label>
-    <label class="toggle"><input type="checkbox" id="optStreak" checked><span>Mostra i giorni di disciplina</span></label>
-    <div class="field">
+    <div class="group"><span class="label">Frasi</span><div class="chips" id="srcChips"></div></div>
+    <div class="group"><span class="label">Stile</span><div class="chips" id="styleChips"></div></div>
+    <div class="group"><span class="label">Colori</span><div class="chips" id="palChips"></div></div>
+    <div class="group">
+      <label class="toggle"><input type="checkbox" id="optWhy" checked><span>Aggiungi il mio perché sotto la frase</span></label>
+      <label class="toggle"><input type="checkbox" id="optStreak" checked><span>Mostra i giorni di disciplina</span></label>
+    </div>
+    <div class="group">
       <label class="label" for="optRotate">Cambio automatico a schermo intero</label>
       <select id="optRotate">
         <option value="0">Spento</option>
@@ -325,14 +307,13 @@ nav.tabs svg { width: 22px; height: 22px; }
         <option value="900">Ogni 15 minuti</option>
         <option value="3600">Ogni ora</option>
       </select>
-      <p class="hint">Utile con il telefono sul supporto accanto ai monitor: lo schermo resta acceso e il messaggio cambia da solo.</p>
+      <p class="hint">Con il telefono sul supporto accanto ai monitor, lo schermo resta acceso e la frase cambia da sola.</p>
     </div>
 
     <div class="panel" id="lockPanel">
-      <div class="field">
-        <span class="label">Blocco schermo</span>
+      <div class="group">
         <h2>Le tue frasi a ogni sblocco</h2>
-        <p class="lead">Crea un pacchetto di sfondi con le tue frasi di "Chi sono" e "Cosa voglio", con stile e colori scelti sopra. Il testo sta sotto l'orologio e lontano dai tasti torcia e fotocamera.</p>
+        <p class="lead">Un pacchetto di sfondi con le frasi di Chi sono, nello stile e nei colori scelti sopra. Il testo resta sotto l'orologio e lontano da torcia e fotocamera.</p>
       </div>
       <div class="row-btns">
         <button class="btn primary" id="btnPack" type="button">Crea il pacchetto</button>
@@ -340,77 +321,78 @@ nav.tabs svg { width: 22px; height: 22px; }
       </div>
       <div class="gallery" id="gallery"></div>
       <p class="hint" id="packHint" hidden>Tocca uno sfondo per aprirlo a schermo intero e tienilo premuto per salvarlo.</p>
-      <div class="field">
+      <div class="group">
         <span class="label">Farli ruotare da soli</span>
-        <ol class="steps">
-          <li><b>iPhone:</b> salva gli sfondi in un album "Chi sono" nelle Foto. Poi Impostazioni → Sfondo → Aggiungi nuovo sfondo → <b>Foto casuali</b> → scegli l'album, frequenza <b>Al tocco</b> o <b>Ogni ora</b>.</li>
-          <li><b>Samsung:</b> Impostazioni → Sfondo e stile → Schermata di blocco → <b>Galleria</b>, seleziona più sfondi: cambiano a ogni accensione.</li>
-          <li><b>Altri Android:</b> metti gli sfondi in una cartella e usa un'app di rotazione (per esempio Muzei con "Le mie foto").</li>
-        </ol>
+        <ul class="steps">
+          <li><b>iPhone:</b> salva gli sfondi in un album "Chi sono". Poi Impostazioni, Sfondo, Aggiungi nuovo sfondo, <b>Foto casuali</b>: scegli l'album e la frequenza <b>Al tocco</b>.</li>
+          <li><b>Samsung:</b> Impostazioni, Sfondo e stile, Schermata di blocco, <b>Galleria</b>: seleziona più sfondi e cambiano a ogni accensione.</li>
+          <li><b>Altri Android:</b> metti gli sfondi in una cartella e usa un'app di rotazione, per esempio Muzei con "Le mie foto".</li>
+        </ul>
       </div>
     </div>
   </section>
 
   <!-- RITUALE -->
   <section class="screen" id="tab-rituale" hidden>
-    <div class="top"><h2>Rituale pre-mercato</h2><span class="label" id="ritualDate"></span></div>
-    <p class="lead">Spunta tutto prima di aprire il primo trade. Se completi la lista, la giornata conta per la tua serie di disciplina.</p>
-    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <header class="top"><h2>Rituale pre-mercato</h2><span class="meta" id="ritualDate"></span></header>
+    <div class="group">
+      <p class="lead">Completa la lista prima del primo trade. Una lista completa vale un giorno nella tua serie.</p>
+      <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    </div>
     <ul class="checklist" id="checklist"></ul>
     <div class="approved" id="approved" hidden>
       <strong>Sessione approvata</strong>
       <span>Ora fai solo i trade del tuo piano. Il resto è rumore.</span>
     </div>
-
-    <div class="field">
+    <div class="group">
       <span class="label">Ultimi 10 giorni di borsa</span>
       <div class="week" id="weekGrid"></div>
     </div>
-
-    <div class="field">
-      <label class="label" for="winInput">Una cosa fatta bene oggi (processo, non profitto)</label>
-      <input type="text" id="winInput" maxlength="140" placeholder="Es. ho rispettato lo stop su ENI senza spostarlo">
-      <div class="row-btns"><button class="btn" id="btnWin" type="button">Annota</button></div>
+    <div class="group">
+      <label class="label" for="winInput">Una cosa fatta bene oggi, nel processo e non nel profitto</label>
+      <div class="add-row"><input type="text" id="winInput" maxlength="140" placeholder="Ho rispettato lo stop su ENI senza spostarlo"><button class="btn" id="btnWin" type="button">Annota</button></div>
       <ul class="log" id="winLog"></ul>
     </div>
   </section>
 
   <!-- CHI SONO -->
   <section class="screen" id="tab-perche" hidden>
-    <div class="top"><h2>Chi sono</h2><span class="label" id="meCount"></span></div>
-    <p class="lead">Scegli le frasi che descrivono il trader che sei, o che hai deciso di diventare. Diventano il tuo blocco schermo e la prima cosa che leggi ogni mattina. Si salvano da sole.</p>
-    <div class="field">
+    <header class="top"><h2>Chi sono</h2><span class="meta num" id="meCount"></span></header>
+    <p class="lead">Scegli le frasi che descrivono il trader che sei, o quello che hai deciso di diventare. Diventano il tuo blocco schermo. Si salvano da sole.</p>
+    <div class="group">
       <label class="label" for="inName">Come ti chiami</label>
       <input type="text" id="inName" maxlength="40" placeholder="Stefano">
     </div>
-    <div class="field">
+    <div class="group">
       <span class="label">Io sono un trader che…</span>
       <div class="chips" id="idChips"></div>
       <div class="add-row"><input type="text" id="inIdNew" maxlength="90" placeholder="Scrivi la tua frase"><button class="btn" id="btnIdAdd" type="button">Aggiungi</button></div>
     </div>
-    <div class="field">
+    <div class="group">
       <span class="label">Cosa voglio dalla mia carriera</span>
       <div class="chips" id="wantChips"></div>
       <div class="add-row"><input type="text" id="inWantNew" maxlength="90" placeholder="Voglio…"><button class="btn" id="btnWantAdd" type="button">Aggiungi</button></div>
     </div>
-    <div class="field">
+    <div class="group">
       <label class="label" for="inVision">Tra 3 anni voglio essere</label>
       <textarea id="inVision" maxlength="200" placeholder="Un trader a tempo pieno che vive del proprio conto, con un processo che rifarei identico ogni giorno."></textarea>
     </div>
-    <div class="field">
+    <div class="group">
       <label class="label" for="inGoal">Obiettivo dei prossimi 12 mesi</label>
       <input type="text" id="inGoal" maxlength="90" placeholder="Rispettare il rischio dell'1% su ogni trade per 250 sessioni">
     </div>
-    <div class="field">
+    <div class="group">
       <label class="label" for="inWhy">Perché ho scelto il trading</label>
       <textarea id="inWhy" maxlength="220" placeholder="Voglio la libertà di decidere il mio tempo e costruire qualcosa con le mie regole."></textarea>
     </div>
-    <div class="field">
+    <div class="group">
       <label class="label" for="inRule">La mia regola d'oro</label>
       <input type="text" id="inRule" maxlength="90" placeholder="Mai spostare lo stop contro di me.">
     </div>
-    <div class="row-btns"><button class="btn primary" id="btnGoLock" type="button">Crea i miei sfondi per il blocco schermo</button></div>
-    <p class="hint">Restano solo su questo telefono, in questo browser.</p>
+    <div class="group">
+      <button class="btn primary" id="btnGoLock" type="button">Crea i miei sfondi per il blocco schermo</button>
+      <p class="hint">Restano solo su questo telefono, in questo browser.</p>
+    </div>
   </section>
 </main>
 
@@ -547,16 +529,16 @@ nav.tabs svg { width: 22px; height: 22px; }
     "Voglio essere orgoglioso di come opero, non solo di quanto guadagno."
   ];
   var PALETTES = [
-    { id: "petrolio", name: "Petrolio", bg1: "#08141a", bg2: "#123540", fg: "#eef3f1", accent: "#e8b04a", up: "#4fb3a3", down: "#d9705a" },
-    { id: "ambra", name: "Ambra", bg1: "#140d07", bg2: "#3b2513", fg: "#fbefdc", accent: "#ffb347", up: "#c8b07a", down: "#c9573c" },
-    { id: "ardesia", name: "Ardesia", bg1: "#111318", bg2: "#2b303b", fg: "#f2f2ef", accent: "#8fc1ff", up: "#7fbfa6", down: "#e07a6a" },
-    { id: "vino", name: "Vino", bg1: "#16080c", bg2: "#45172a", fg: "#f8e9ea", accent: "#f0c27a", up: "#d6a2ad", down: "#ff8a6b" },
-    { id: "alba", name: "Alba", bg1: "#e6edf1", bg2: "#aec3d1", fg: "#0e1b26", accent: "#b4430e", up: "#2f7d6d", down: "#b4430e" }
+    { id: "nero", name: "Nero e ottone", bg: "#0e0d0c", fg: "#f5f2ec", accent: "#d4a95c" },
+    { id: "bottiglia", name: "Verde bottiglia", bg: "#0f1d17", fg: "#ece7dc", accent: "#c9a45c" },
+    { id: "bordeaux", name: "Bordeaux", bg: "#2a1013", fg: "#f3e7e3", accent: "#e0ad74" },
+    { id: "notte", name: "Notte", bg: "#0b0e12", fg: "#eef1f4", accent: "#9fbfd6" },
+    { id: "pietra", name: "Pietra", bg: "#e4e3de", fg: "#161514", accent: "#8a5a1e" }
   ];
   var STYLES = [
+    { id: "linea", name: "Linea" },
     { id: "candele", name: "Candele" },
-    { id: "equity", name: "Curva equity" },
-    { id: "livelli", name: "Livelli" }
+    { id: "testo", name: "Solo parole" }
   ];
 
   /* ---------- utilità ---------- */
@@ -580,6 +562,8 @@ nav.tabs svg { width: 22px; height: 22px; }
   }
   var MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
   var DAYS = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
+  var DAYS_LONG = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+  var MONTHS_LONG = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 
   /* ---------- stato ---------- */
   var profile = Object.assign({ name: "", why: "", goal: "", rule: "", vision: "", ids: [], wants: [], idOpts: [], wantOpts: [] }, store.get("profile", {}));
@@ -587,6 +571,8 @@ nav.tabs svg { width: 22px; height: 22px; }
   var checks = store.get("checks", {});               // { day: [bool...] }
   var wins = store.get("wins", []);                   // [{d, t}]
   var wpPrefs = Object.assign({ style: "candele", pal: "petrolio", why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
+  if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "linea";
+  if (!PALETTES.some(function (x) { return x.id === wpPrefs.pal; })) wpPrefs.pal = "nero";
   var quoteOffset = 0;
   var wpSeed = Date.now() & 0xffffffff;
   var wpQuote = null;
@@ -594,12 +580,12 @@ nav.tabs svg { width: 22px; height: 22px; }
   // frasi personali: chi sono, cosa voglio, visione, obiettivo, perché, regola
   function personalPhrases() {
     var out = [];
-    profile.ids.forEach(function (t) { out.push({ text: t, label: "CHI SONO" }); });
-    profile.wants.forEach(function (t) { out.push({ text: t, label: "COSA VOGLIO" }); });
-    if (profile.vision) out.push({ text: profile.vision, label: "TRA 3 ANNI" });
-    if (profile.goal) out.push({ text: profile.goal, label: "OBIETTIVO 12 MESI" });
-    if (profile.why) out.push({ text: profile.why, label: "IL MIO PERCHÉ", isWhy: true });
-    if (profile.rule) out.push({ text: profile.rule, label: "LA MIA REGOLA" });
+    profile.ids.forEach(function (t) { out.push({ text: t, label: "Chi sono" }); });
+    profile.wants.forEach(function (t) { out.push({ text: t, label: "Cosa voglio" }); });
+    if (profile.vision) out.push({ text: profile.vision, label: "Tra tre anni" });
+    if (profile.goal) out.push({ text: profile.goal, label: "Obiettivo dei prossimi 12 mesi" });
+    if (profile.why) out.push({ text: profile.why, label: "Il mio perché", isWhy: true });
+    if (profile.rule) out.push({ text: profile.rule, label: "La mia regola" });
     return out;
   }
   function useMine() { return wpPrefs.src === "mine" || (wpPrefs.src === "auto" && personalPhrases().length > 0); }
@@ -635,10 +621,10 @@ nav.tabs svg { width: 22px; height: 22px; }
   function marketStatus(tz, open, close) {
     var z = zoneNow(tz);
     if (!z) return { cls: "", txt: "orario non disponibile" };
-    if (z.wd === "Sat" || z.wd === "Sun") return { cls: "", txt: "chiusa · weekend" };
-    if (z.min >= open && z.min < close) return { cls: "open", txt: "aperta · chiude tra " + fmtDur(close - z.min) };
-    if (z.min < open) return { cls: open - z.min <= 90 ? "pre" : "", txt: "chiusa · apre tra " + fmtDur(open - z.min) };
-    return { cls: "", txt: "chiusa · riapre domani" };
+    if (z.wd === "Sat" || z.wd === "Sun") return { cls: "", txt: "Chiusa nel weekend" };
+    if (z.min >= open && z.min < close) return { cls: "open", txt: "Aperta, chiude tra " + fmtDur(close - z.min) };
+    if (z.min < open) return { cls: open - z.min <= 90 ? "pre" : "", txt: "Apre tra " + fmtDur(open - z.min) };
+    return { cls: "", txt: "Chiusa, riapre domani" };
   }
   function renderMarkets() {
     var mil = marketStatus("Europe/Rome", 9 * 60, 17 * 60 + 30);
@@ -648,25 +634,12 @@ nav.tabs svg { width: 22px; height: 22px; }
   }
 
   /* ---------- schermata Oggi ---------- */
-  function drawSpark() {
-    var c = $("spark"), w = c.clientWidth || 300, h = 70, dpr = window.devicePixelRatio || 1;
-    c.width = w * dpr; c.height = h * dpr;
-    var g = c.getContext("2d"); g.scale(dpr, dpr);
-    var r = rng(dayNumber(new Date()) + quoteOffset), pts = [], v = 0.6;
-    for (var i = 0; i <= 40; i++) { v += (r() - 0.42) * 0.12; v = Math.max(0.1, Math.min(0.95, v)); pts.push(v); }
-    var css = getComputedStyle(document.documentElement);
-    var up = css.getPropertyValue("--up").trim() || "#4fb3a3";
-    g.beginPath();
-    pts.forEach(function (p, i) { var x = i / 40 * w, y = h - p * h; i ? g.lineTo(x, y) : g.moveTo(x, y); });
-    g.strokeStyle = up; g.lineWidth = 1.5; g.stroke();
-    g.lineTo(w, h); g.lineTo(0, h); g.closePath();
-    var grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, up + "55"); grd.addColorStop(1, up + "00");
-    g.fillStyle = grd; g.fill();
-  }
   function renderToday() {
     var d = new Date();
-    $("todayLabel").textContent = DAYS[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
-    $("quoteLabel").textContent = quoteOffset ? "Un altro pensiero" : (profile.name ? "Regola del giorno, " + profile.name : "Regola del giorno");
+    $("todayLabel").textContent = DAYS_LONG[d.getDay()] + " " + d.getDate() + " " + MONTHS_LONG[d.getMonth()];
+    var h = d.getHours(), hello = h < 5 ? "Buonanotte" : h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera";
+    $("greet").textContent = hello + (profile.name ? ", " + profile.name : "") + ". Ricordati chi sei.";
+    $("quoteLabel").textContent = quoteOffset ? "Un altro pensiero" : "Regola del giorno";
     $("quoteText").textContent = quoteFor(d, quoteOffset);
     $("streakN").textContent = streak();
     $("totalN").textContent = totalSessions();
@@ -678,7 +651,6 @@ nav.tabs svg { width: 22px; height: 22px; }
     $("meWantRow").hidden = !wants.length; $("meWant").textContent = wants.length ? wants[n % wants.length] : "";
     $("meWhyRow").hidden = !profile.why; $("meWhy").textContent = profile.why || "";
     $("btnMeEdit").textContent = empty ? "Scrivi chi sei" : "Modifica";
-    drawSpark();
     renderMarkets();
   }
 
@@ -698,114 +670,71 @@ nav.tabs svg { width: 22px; height: 22px; }
     var W = canvas.width, H = canvas.height, g = canvas.getContext("2d");
     var pal = PALETTES.filter(function (p) { return p.id === o.pal; })[0] || PALETTES[0];
     var r = rng(o.seed);
-    var light = pal.id === "alba";
-
-    // fondo
-    var bg = g.createLinearGradient(0, 0, W * 0.3, H);
-    bg.addColorStop(0, pal.bg1); bg.addColorStop(1, pal.bg2);
-    g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    var glow = g.createRadialGradient(W * 0.85, H * 0.18, 0, W * 0.85, H * 0.18, W * 1.1);
-    glow.addColorStop(0, hexA(pal.accent, light ? 0.18 : 0.22)); glow.addColorStop(1, hexA(pal.accent, 0));
-    g.fillStyle = glow; g.fillRect(0, 0, W, H);
-
-    var top = H * 0.62, bottom = H * 0.9; // fascia grafico sotto il testo
-    if (o.style === "candele") {
-      var n = 46, cw = W / n, price = 0.5, vals = [];
-      for (var i = 0; i < n; i++) {
-        var open = price, close = open + (r() - 0.44) * 0.09;
-        var hi = Math.max(open, close) + r() * 0.04, lo = Math.min(open, close) - r() * 0.04;
-        vals.push([open, close, hi, lo]); price = close;
-      }
-      var mn = Math.min.apply(null, vals.map(function (v) { return v[3]; })), mx = Math.max.apply(null, vals.map(function (v) { return v[2]; }));
-      var Y = function (v) { return bottom - (v - mn) / (mx - mn) * (bottom - top); };
-      vals.forEach(function (v, i) {
-        var x = i * cw + cw / 2, upC = v[1] >= v[0], col = upC ? pal.up : pal.down;
-        g.strokeStyle = hexA(col, 0.55); g.lineWidth = 3;
-        g.beginPath(); g.moveTo(x, Y(v[2])); g.lineTo(x, Y(v[3])); g.stroke();
-        g.fillStyle = hexA(col, upC ? 0.5 : 0.38);
-        var y1 = Y(Math.max(v[0], v[1])), y2 = Y(Math.min(v[0], v[1]));
-        g.fillRect(x - cw * 0.32, y1, cw * 0.64, Math.max(4, y2 - y1));
-      });
-    } else if (o.style === "equity") {
-      var pts = [], e = 0.15, peak = 0.15;
-      for (var j = 0; j <= 120; j++) {
-        e += (r() - 0.4) * 0.03; e = Math.max(0.02, e); peak = Math.max(peak, e); pts.push(e);
-      }
-      var mxE = Math.max.apply(null, pts), mnE = Math.min.apply(null, pts);
-      var top2 = H * 0.66;
-      var YE = function (v) { return bottom - (v - mnE) / (mxE - mnE) * (bottom - top2); };
-      g.beginPath();
-      pts.forEach(function (p, k) { var x = k / 120 * W; k ? g.lineTo(x, YE(p)) : g.moveTo(x, YE(p)); });
-      g.strokeStyle = hexA(pal.up, 0.85); g.lineWidth = 6; g.lineJoin = "round"; g.stroke();
-      g.lineTo(W, H); g.lineTo(0, H); g.closePath();
-      var ag = g.createLinearGradient(0, top2, 0, H); ag.addColorStop(0, hexA(pal.up, 0.28)); ag.addColorStop(1, hexA(pal.up, 0));
-      g.fillStyle = ag; g.fill();
-      // massimo raggiunto
-      g.setLineDash([14, 14]); g.strokeStyle = hexA(pal.accent, 0.6); g.lineWidth = 3;
-      g.beginPath(); g.moveTo(0, YE(mxE)); g.lineTo(W, YE(mxE)); g.stroke(); g.setLineDash([]);
-      g.font = "500 30px 'IBM Plex Mono', monospace"; g.fillStyle = hexA(pal.accent, 0.8); g.textAlign = "right";
-      g.fillText("NUOVO MASSIMO", W - 60, YE(mxE) - 18); g.textAlign = "left";
-    } else {
-      // livelli: griglia e asse prezzi come su una piattaforma
-      g.strokeStyle = hexA(pal.fg, 0.07); g.lineWidth = 2;
-      for (var gy = 0; gy < H; gy += 160) { g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke(); }
-      for (var gx = 0; gx < W; gx += 195) { g.beginPath(); g.moveTo(gx, 0); g.lineTo(gx, H); g.stroke(); }
-      var base = 21000 + Math.floor(r() * 18000);
-      g.font = "500 28px 'IBM Plex Mono', monospace"; g.textAlign = "right";
-      for (var ly = 160, lv = 0; ly < H; ly += 160, lv++) {
-        g.fillStyle = hexA(pal.fg, 0.28); g.fillText((base - lv * 125).toLocaleString("it-IT"), W - 30, ly - 12);
-      }
-      var lvls = [[H * 0.69, pal.up, "SUPPORTO"], [H * 0.79, pal.down, "STOP"], [H * 0.6, pal.accent, "TARGET"]];
-      lvls.forEach(function (L) {
-        g.strokeStyle = hexA(L[1], 0.75); g.lineWidth = 4; g.setLineDash(L[2] === "STOP" ? [18, 12] : []);
-        g.beginPath(); g.moveTo(0, L[0]); g.lineTo(W, L[0]); g.stroke(); g.setLineDash([]);
-        g.fillStyle = L[1]; g.fillRect(W - 250, L[0] - 24, 220, 48);
-        g.fillStyle = light ? "#ffffff" : pal.bg1; g.textAlign = "center"; g.fillText(L[2], W - 140, L[0] + 10);
-      });
-      g.textAlign = "left";
-    }
-
-    // grana
-    for (var s = 0; s < 14000; s++) {
-      g.fillStyle = r() > 0.5 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.05)";
-      g.fillRect(r() * W, r() * H, 2, 2);
-    }
-
-    // testo: sotto l'orologio della schermata di blocco, sopra il grafico
-    var X = 96, maxW = W - X * 2;
-    var d = o.date === undefined ? new Date() : o.date;
-    g.textBaseline = "alphabetic";
-    g.font = "500 34px 'IBM Plex Mono', monospace";
-    g.fillStyle = pal.accent;
-    var tag = (o.label || "REGOLA DEL GIORNO") + (d ? "  ·  " + pad(d.getDate()) + "." + pad(d.getMonth() + 1) : "");
-    if ("letterSpacing" in g) g.letterSpacing = "5px";
-    g.fillText(tag, X, H * 0.355);
     if ("letterSpacing" in g) g.letterSpacing = "0px";
+    g.fillStyle = pal.bg; g.fillRect(0, 0, W, H);
 
-    var size = 132, lines;
+    var X = 104, maxW = W - X * 2;
+    var top = H * 0.70, bottom = H * 0.82; // fascia del grafico, sopra i tasti torcia e fotocamera
+    if (o.style === "linea") {
+      var pts = [], e = 0;
+      for (var j = 0; j <= 90; j++) { e += r() - 0.4; pts.push(e); }
+      var mx = Math.max.apply(null, pts), mn = Math.min.apply(null, pts);
+      var Y = function (v) { return bottom - (v - mn) / (mx - mn || 1) * (bottom - top); };
+      var x1 = W - X;
+      g.beginPath();
+      pts.forEach(function (p, k) { var x = X + k / 90 * (x1 - X); k ? g.lineTo(x, Y(p)) : g.moveTo(x, Y(p)); });
+      g.strokeStyle = hexA(pal.fg, 0.35); g.lineWidth = 3; g.lineJoin = "round"; g.stroke();
+      g.fillStyle = pal.accent; g.beginPath(); g.arc(x1, Y(pts[90]), 11, 0, Math.PI * 2); g.fill();
+    } else if (o.style === "candele") {
+      var n = 34, cw = (W - X * 2) / n, price = 0, vals = [];
+      for (var i = 0; i < n; i++) {
+        var op = price, cl = op + (r() - 0.42) * 1.6;
+        vals.push([op, cl, Math.max(op, cl) + r() * 0.7, Math.min(op, cl) - r() * 0.7]); price = cl;
+      }
+      var lo = Math.min.apply(null, vals.map(function (v) { return v[3]; })), hi = Math.max.apply(null, vals.map(function (v) { return v[2]; }));
+      var YC = function (v) { return bottom - (v - lo) / (hi - lo || 1) * (bottom - top); };
+      vals.forEach(function (v, i) {
+        var x = X + i * cw + cw / 2, upC = v[1] >= v[0];
+        var col = i === n - 1 ? pal.accent : hexA(pal.fg, upC ? 0.42 : 0.18);
+        g.strokeStyle = col; g.lineWidth = 3;
+        g.beginPath(); g.moveTo(x, YC(v[2])); g.lineTo(x, YC(v[3])); g.stroke();
+        var y1 = YC(Math.max(v[0], v[1])), y2 = YC(Math.min(v[0], v[1]));
+        g.fillStyle = col; g.fillRect(x - cw * 0.28, y1, cw * 0.56, Math.max(4, y2 - y1));
+      });
+    }
+
+    // etichetta e frase: sotto l'orologio della schermata di blocco
+    var d = o.date === undefined ? new Date() : o.date;
+    var label = (o.label || "Regola del giorno") + (d ? ", " + d.getDate() + " " + MONTHS_LONG[d.getMonth()] : "");
+    var y = H * 0.36;
+    g.textBaseline = "alphabetic";
+    g.font = "500 38px 'Instrument Sans', system-ui, sans-serif";
+    g.fillStyle = pal.accent;
+    g.fillText(label, X, y);
+
+    var size = 124, lines;
     do {
-      g.font = "800 " + size + "px 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif";
+      g.font = "400 " + size + "px 'Instrument Serif', Georgia, serif";
       lines = wrapLines(g, o.quote, maxW);
-      size -= 6;
-    } while (lines.length * size * 1.02 > H * 0.24 && size > 70);
-    size += 6;
-    var lh = size * 1.0, y = H * 0.355 + 40 + size;
+      size -= 4;
+    } while (lines.length * size * 1.06 > H * 0.25 && size > 72);
+    size += 4;
+    var lh = size * 1.06;
+    y += 36 + size * 0.92;
     g.fillStyle = pal.fg;
     lines.forEach(function (ln) { g.fillText(ln, X, y); y += lh; });
 
     if (o.why && o.whyText) {
-      y += 30;
-      g.font = "italic 400 42px 'IBM Plex Sans', system-ui, sans-serif";
-      var wl = wrapLines(g, o.whyText, maxW - 30).slice(0, 3);
-      g.fillStyle = pal.accent; g.fillRect(X, y, 6, wl.length * 56 - 8);
-      g.fillStyle = hexA(pal.fg, 0.82);
-      wl.forEach(function (ln, i) { g.fillText(ln, X + 30, y + 42 + i * 56); });
+      y += 24;
+      g.font = "italic 400 58px 'Instrument Serif', Georgia, serif";
+      g.fillStyle = hexA(pal.fg, 0.62);
+      wrapLines(g, o.whyText, maxW).slice(0, 3).forEach(function (ln, i) { g.fillText(ln, X, y + 20 + i * 70); });
     }
 
     if (o.streak && o.streakN > 0) {
-      g.font = "500 32px 'IBM Plex Mono', monospace";
-      g.fillStyle = hexA(pal.fg, 0.7);
-      g.fillText(o.streakN + (o.streakN === 1 ? " GIORNO" : " GIORNI") + " DI DISCIPLINA DI FILA", X, H * 0.865);
+      g.font = "500 36px 'Instrument Sans', system-ui, sans-serif";
+      g.fillStyle = hexA(pal.fg, 0.62);
+      g.fillText(o.streakN + (o.streakN === 1 ? " giorno" : " giorni") + " di disciplina di fila", X, H * 0.865);
     }
   }
 
@@ -853,7 +782,7 @@ nav.tabs svg { width: 22px; height: 22px; }
     var pc = $("palChips"); pc.innerHTML = "";
     PALETTES.forEach(function (p) {
       var b = document.createElement("button"); b.type = "button"; b.className = "chip";
-      b.innerHTML = '<i class="swatch"></i>'; b.firstChild.style.background = "linear-gradient(135deg," + p.bg2 + " 50%," + p.accent + " 50%)";
+      b.innerHTML = '<i class="swatch"></i>'; b.firstChild.style.background = p.bg; b.firstChild.style.boxShadow = "inset 0 0 0 4px " + p.bg + ", inset 0 0 0 9px " + p.accent;
       b.appendChild(document.createTextNode(p.name));
       b.setAttribute("aria-pressed", String(wpPrefs.pal === p.id));
       b.onclick = function () { wpPrefs.pal = p.id; store.set("wp", wpPrefs); buildChips(); drawWp(); };
@@ -1122,9 +1051,9 @@ nav.tabs svg { width: 22px; height: 22px; }
     // ridisegna quando i font sono pronti, così il canvas usa i caratteri giusti
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
       Promise.all([
-        document.fonts.load("800 100px 'Big Shoulders Display'"),
-        document.fonts.load("500 30px 'IBM Plex Mono'"),
-        document.fonts.load("italic 400 40px 'IBM Plex Sans'")
+        document.fonts.load("400 100px 'Instrument Serif'"),
+        document.fonts.load("italic 400 50px 'Instrument Serif'"),
+        document.fonts.load("500 36px 'Instrument Sans'")
       ]).catch(function () {}).then(function () { if (!$("tab-sfondi").hidden) drawWp(); });
     });
     if (!inFrame && "serviceWorker" in navigator && location.protocol === "https:") {
