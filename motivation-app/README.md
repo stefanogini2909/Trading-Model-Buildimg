@@ -11,7 +11,7 @@ Design: nero caldo, profondità data solo da stacchi di tono, un unico accento o
 | Sezione | A cosa serve |
 |---|---|
 | **Oggi** | "Ricordati chi sei": una tua frase d'identità al giorno, cosa vuoi dalla carriera e il tuo perché. Regola del giorno (cambia ogni giorno), stato di Borsa Italiana e New York, giorni di disciplina di fila, il tuo "perché", pulsante **Ho appena perso un trade** (respirazione guidata, pausa di 15 minuti, checklist anti-revenge). |
-| **Sfondi** | Sfondi 1170×2532 in alta definizione: sempre una **foto** con sopra un **effetto di luce** animato. Foto: **Tropici al tramonto** (palme in controluce), **Strade dall'alto** (città di giorno e di notte), **Spazio** (foto NASA), **Auto sportive**, più **Casa sotto la pioggia** e **Pioggia sul vetro**. Effetti: **Fasci di luce** (raggi volumetrici dal sole della foto, bloccati dalle sagome), **Scie di luce** (nastri di filamenti incandescenti stile Trapcode), **Flusso di energia**, **Aurora** (solo nel cielo), oppure **Automatico** per ogni foto. Sulle palme gli effetti passano *dietro* le sagome scure. Color correction che mantiene i colori originali e li rende più nitidi. Frasi tue, di **Mente calma** o di trading. 5 tavolozze che danno il colore agli effetti. |
+| **Sfondi** | Sfondi 1170×2532 in alta definizione, creati da zero in WebGL con una luce coerente: **Tramonto tropicale** (palme in controluce disegnate foglia per foglia che ondeggiano, isolotto all'orizzonte, raggi di sole che passano dietro le palme, scia del sole che scintilla sul mare), **Autostrada di notte** vista dall'alto (scie dei fari bianche e rosse in esposizione lunga, lampioni al sodio, città con piccole luci), **Aurora sul lago** (aurora verde e magenta, montagne, stelle, riflesso nel lago increspato). Restano **Casa sotto la pioggia**, **Pioggia sul vetro** e, come alternativa, le foto con effetti di luce. Frasi tue, di **Mente calma** o di trading. |
 | **Rituale** | Checklist pre-mercato: se la completi, la giornata conta per la serie (si contano solo i giorni feriali). Diario breve "una cosa fatta bene oggi". |
 | **Chi sono** | Frasi d'identità ("Rispetto ogni stop, senza eccezioni.") e di carriera ("Voglio vivere del mio trading.") da toccare per sceglierle, o da scrivere tu; visione a 3 anni, obiettivo a 12 mesi, perché e regola d'oro. Si salva da solo. |
 
@@ -50,14 +50,14 @@ Nella cartella `wallpapers/` ci sono anche 24 sfondi pronti, con frasi di mente 
 
 **Come è fatta l'animazione.** Le scene WebGL girano sulla scheda grafica del telefono, a 60 fps e alla risoluzione piena dello schermo, con una catena di post-produzione come in After Effects:
 
-1. **Scena**: la foto, con una spinta lenta in avanti e l'ambiente proprio dello scatto (acqua che tremola, stelle, luci della città), più l'effetto di luce composto sopra. I fasci partono dal sole della foto e vengono bloccati dalle sagome; scie, energia e aurora passano dietro le palme.
+1. **Scena**: disegnata da zero in uno shader, con una sola luce coerente: il sole del tramonto illumina cielo, nuvole e mare e i suoi raggi passano dietro le palme; in autostrada le luci sono i fari e i lampioni; sul lago è l'aurora a illuminare e a riflettersi.
 2. **Glow**: estrazione delle luci sopra una soglia morbida, sfocatura gaussiana su due raggi (stretto e largo) e una scia anamorfica orizzontale.
 3. **Color correction**: nitidezza sui bordi (maschera di contrasto che ignora il rumore), esposizione, compressione delle alte luci, vividezza (alza i colori spenti più di quelli già saturi, le tinte restano le loro), contrasto a curva S, una tinta dosata (appena accennata sulle foto, più presente sulle scene generate, con le luci che cambiano colore lentamente), vignettatura e grana fine contro le bande.
 
 Il linguaggio di movimento è "Premium": cicli lenti da 10 secondi, curve morbide, nessun rimbalzo. Quando apri lo schermo intero o riaccendi lo schermo, l'immagine si espone dal nero mentre il glow si posa, poi entra la frase.
 
 - **Nell'app**: "Schermo intero" mostra l'animazione dal vivo (si spegne con "Animazione a schermo intero").
-- **Video pronti**: nella cartella `videos/` ci sono 10 MP4 a 60 fps (1080×2338) in loop continuo, senza stacchi: palme con scie di luce, palme con aurora, palme con fasci di luce, palme con flusso di energia, città di notte con scie di luce, città di notte con aurora, lungolago con flusso di energia, astronauta con aurora, casa sotto la pioggia, pioggia sul vetro.
+- **Video pronti**: nella cartella `videos/` ci sono MP4 a 60 fps (1080×2338) in loop continuo, senza stacchi: tramonto tropicale (due varianti), autostrada di notte (due varianti), aurora sul lago (due varianti), casa sotto la pioggia, pioggia sul vetro.
 - **Il tuo video**: dall'app installata, "Registra il video animato" crea un video con le tue frasi.
 - **Samsung**: Impostazioni → Sfondo e stile → Schermata di blocco → Galleria → scegli il video.
 - **Altri Android**: un'app per video come sfondo animato (per esempio Video Live Wallpaper).

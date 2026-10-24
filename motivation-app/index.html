@@ -297,8 +297,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     </div>
 
     <div class="group"><span class="label">Frasi</span><div class="chips" id="srcChips"></div></div>
-    <div class="group"><span class="label">Foto</span><div class="chips" id="styleChips"></div></div>
-    <div class="group"><span class="label">Effetto di luce sulla foto</span><div class="chips" id="fxChips"></div></div>
+    <div class="group"><span class="label">Scena</span><div class="chips" id="styleChips"></div></div>
+    <div class="group" id="fxGroup"><span class="label">Effetto di luce sulla foto</span><div class="chips" id="fxChips"></div></div>
     <div class="group"><span class="label">Colori</span><div class="chips" id="palChips"></div></div>
     <div class="group">
       <label class="toggle"><input type="checkbox" id="optAnim" checked><span>Animazione a schermo intero</span></label>
@@ -554,8 +554,11 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     { id: "pietra", name: "Pietra", bg: "#e4e3de", fg: "#161514", accent: "#8a5a1e" }
   ];
   var STYLES = [
-    { id: "tropici", name: "Tropici al tramonto" },
-    { id: "strade", name: "Strade dall'alto" },
+    { id: "tramonto", name: "Tramonto tropicale" },
+    { id: "autostrada", name: "Autostrada di notte" },
+    { id: "lago", name: "Aurora sul lago" },
+    { id: "tropici", name: "Foto: palme al tramonto" },
+    { id: "strade", name: "Foto: strade dall'alto" },
     { id: "casa", name: "Casa sotto la pioggia" },
     { id: "vetro", name: "Pioggia sul vetro" },
     { id: "spazio", name: "Spazio" },
@@ -626,8 +629,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var sessions = store.get("sessions", {});           // { "2026-10-24": true }
   var checks = store.get("checks", {});               // { day: [bool...] }
   var wins = store.get("wins", []);                   // [{d, t}]
-  var wpPrefs = Object.assign({ style: "tropici", fx: "auto", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
-  if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "tropici";
+  var wpPrefs = Object.assign({ style: "tramonto", fx: "auto", pal: "nero", anim: true, why: true, streak: true, rotate: "0", src: "auto" }, store.get("wp", {}));
+  if (!STYLES.some(function (x) { return x.id === wpPrefs.style; })) wpPrefs.style = "tramonto";
   if (!wpPrefs.fx) wpPrefs.fx = "auto";
   if (!PALETTES.some(function (x) { return x.id === wpPrefs.pal; })) wpPrefs.pal = "nero";
   var quoteOffset = 0;
@@ -801,7 +804,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
 
   /* ---------- atmosfere: foto e scene animate ---------- */
   var LOOP = 8; // secondi: ogni animazione si ripete senza stacchi
-  var SCENES = ["tropici", "strade", "spazio", "strada", "tropici", "strade", "casa", "vetro"];
+  var SCENES = ["tramonto", "autostrada", "lago", "tramonto", "autostrada", "lago", "casa", "vetro"];
   var PHOTOS = {
     vetro: ["photos/pioggia-vetro.jpg", "photos/pioggia-auto-notte.jpg", "photos/pioggia-finestrino.jpg"],
     spazio: ["photos/astronauta-iss.jpg", "photos/stazione-alba.jpg", "photos/astronauta-casco.jpg"],
@@ -989,7 +992,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   /* ---------- motion design in WebGL: scena, glow multi-raggio, color correction ---------- */
   // Linguaggio di motion "Premium": cicli lenti, nessun rimbalzo, la luce è la protagonista.
   var GL_LOOP = 10;
-  var GL_SCENES = { energia: 0, aurora: 1, tropici: 2, spazio: 3, strada: 4, scie: 5, strade: 6 };
+  var GL_SCENES = { energia: 0, aurora: 1, tropici: 2, spazio: 3, strada: 4, scie: 5, strade: 6, tramonto: 7, autostrada: 8, lago: 9 };
   var PHOTO_MODES = [2, 3, 4, 6];
   // effetti di luce composti sopra le foto
   var FX = [
@@ -1033,7 +1036,11 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     { thr: 0.93, w: [0.40, 0.35, 0.25], tm: 0.25, amt: 0.12, sharp: 0.55, vib: 0.25, con: 0.14 },
     { thr: 0.93, w: [0.35, 0.30, 0.40], tm: 0.25, amt: 0.12, sharp: 0.60, vib: 0.25, con: 0.14 },
     { thr: 0.20, w: [1.20, 1.05, 0.40], tm: 1.0, amt: 0.35, sharp: 0.08, vib: 0.15 },
-    { thr: 0.90, w: [0.45, 0.45, 0.30], tm: 0.25, amt: 0.12, sharp: 0.60, vib: 0.30, con: 0.14 }
+    { thr: 0.90, w: [0.45, 0.45, 0.30], tm: 0.25, amt: 0.12, sharp: 0.60, vib: 0.30, con: 0.14 },
+    // scene create da zero: colori naturali della scena, la tavolozza tocca appena la tinta
+    { thr: 0.80, w: [0.80, 0.75, 0.25], tm: 0.65, amt: 0.15, sharp: 0.12, vib: 0.12, con: 0.18 },
+    { thr: 0.42, w: [1.00, 0.90, 0.35], tm: 0.85, amt: 0.20, sharp: 0.10, vib: 0.12, con: 0.16 },
+    { thr: 0.33, w: [0.90, 0.90, 0.10], tm: 0.90, amt: 0.15, sharp: 0.10, vib: 0.12, con: 0.16 }
   ];
   // altezza dell'orizzonte nelle foto tropicali (0 = fondo, 1 = cima): sotto c'è l'acqua che tremola
   var HORIZON = { "photos/tropici-controluce.jpg": 0.0, "photos/tropici-cielo-rosa.jpg": 0.0, "photos/tropici-crepuscolo.jpg": 0.1, "photos/tropici-laguna.jpg": 0.47, "photos/tropici-viola.jpg": 0.0 };
@@ -1143,6 +1150,216 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     "  col += streak(p * vec2(-1.0, 1.0) + vec2(0.05, 0.0), 0.16, 1.6, 0.07, 3.7, 2.4 + u_seed, 0.45);",
     "  return col;",
     "}",
+    // ===== scene create da zero: ogni luce nasce dalla scena, quindi colori e direzione sono coerenti =====
+    // --- Tramonto tropicale ---
+    // una fronda: costola che si piega per il peso, foglioline inclinate a spina di pesce ai due lati
+    "float frond(vec2 p, vec2 c, float ang, float len, float droop, float sc){",
+    "  vec2 dir = vec2(cos(ang), sin(ang)), q = p - c;",
+    // punto più vicino sulla costola curva: ricerca a passi, poi un affinamento
+    "  float bs = 0.0, bd = 1e9;",
+    "  for (int j = 0; j <= 14; j++){",
+    "    float sj = len * float(j) / 14.0;",
+    "    vec2 r = q - dir * sj - vec2(0.0, -droop * sj * sj);",
+    "    float dd = dot(r, r);",
+    "    if (dd < bd) { bd = dd; bs = sj; }",
+    "  }",
+    "  float st = len / 14.0;",
+    "  for (int j = 0; j < 4; j++){",
+    "    st *= 0.5;",
+    "    float s1 = clamp(bs - st, 0.0, len), s2 = clamp(bs + st, 0.0, len);",
+    "    vec2 r1 = q - dir * s1 - vec2(0.0, -droop * s1 * s1), r2 = q - dir * s2 - vec2(0.0, -droop * s2 * s2);",
+    "    if (dot(r1, r1) < bd) { bd = dot(r1, r1); bs = s1; }",
+    "    if (dot(r2, r2) < bd) { bd = dot(r2, r2); bs = s2; }",
+    "  }",
+    "  if (bd > pow(0.05 * sc, 2.0)) return 0.0;",
+    "  vec2 tg = normalize(dir + vec2(0.0, -2.0 * droop * bs));",
+    "  vec2 r = q - dir * bs - vec2(0.0, -droop * bs * bs);",
+    "  float dn = tg.x * r.y - tg.y * r.x;",
+    "  float u = bs / len;",
+    "  float rib = smoothstep(0.0042 * sc, 0.0026 * sc, abs(dn)) * step(u, 0.98);",
+    // la foglia è stretta all'attacco, piena a metà, sottile in punta
+    "  float env = 0.046 * sc * pow(sin(3.1416 * min(u * 0.96 + 0.04, 1.0)), 0.7);",
+    "  float inLeaf = smoothstep(env, env * 0.75, abs(dn)) * step(bs, len - 0.002);",
+    // foglioline lunghe e inclinate verso la punta, con piccoli spazi tra loro
+    "  float chev = fract((bs - abs(dn) * 0.75) / (0.021 * sc));",
+    "  float leaflets = smoothstep(0.78, 0.55, abs(chev - 0.5) * 2.0);",
+    "  return max(rib, inLeaf * leaflets);",
+    "}",
+    "float palm(vec2 p, vec2 base, vec2 crown, float bend, float sc, float sway){",
+    "  float m = 0.0;",
+    "  if (p.y > base.y && p.y < crown.y + 0.02) {",
+    "    float k = (p.y - base.y) / (crown.y - base.y);",
+    "    float x = mix(base.x, crown.x, k) + bend * k * (1.0 - k);",
+    "    float w = mix(0.034, 0.016, k) * sc;",
+    "    w *= 0.92 + 0.08 * smoothstep(0.3, 0.9, abs(sin(p.y * 160.0 / sc)));",
+    "    m = smoothstep(w, w * 0.75, abs(p.x - x));",
+    "  }",
+    "  if (length(p - crown) < 0.62 * sc + 0.05) {",
+    "    for (int i = 0; i < 12; i++){",
+    "      float fi = float(i);",
+    "      float ang = -0.75 + fi * 0.40 + 0.05 * sin(sway + fi * 1.3);",
+    "      float up = sin(ang);",
+    "      float len = (0.50 + 0.08 * sin(fi * 2.7) - 0.06 * max(-up, 0.0)) * sc;",
+    "      float droop = (0.95 + 0.35 * cos(fi * 1.9) + 0.6 * max(up, 0.0)) / sc;",
+    "      m = max(m, frond(p, crown, ang, len, droop, sc));",
+    "    }",
+    "    m = max(m, smoothstep(0.03 * sc, 0.022 * sc, length(p - crown)));",
+    "  }",
+    "  return m;",
+    "}",
+    "vec3 sunsetGrad(float y, float hz){",
+    "  float h = clamp((y - hz) / (1.0 - hz), 0.0, 1.0);",
+    "  vec3 c = mix(vec3(1.0, 0.64, 0.33), vec3(0.95, 0.40, 0.40), smoothstep(0.0, 0.22, h));",
+    "  c = mix(c, vec3(0.45, 0.21, 0.42), smoothstep(0.18, 0.55, h));",
+    "  return mix(c, vec3(0.07, 0.06, 0.19), smoothstep(0.5, 1.0, h));",
+    "}",
+    "vec3 sunsetSky(vec2 p, float hz, vec2 sun){",
+    "  vec3 c = sunsetGrad(p.y, hz);",
+    "  float d = length(p - sun);",
+    "  c += vec3(1.0, 0.72, 0.42) * exp(-d * 3.2) * 0.55 + vec3(1.0, 0.88, 0.68) * exp(-d * 15.0) * 0.9;",
+    "  c = mix(c, vec3(1.5, 1.3, 1.05), smoothstep(0.062, 0.056, d));",
+    // nuvole sottili e lunghe, illuminate dal basso dal sole
+    "  float cl = fbm(vec2(p.x * 1.4 + u_seed + cyc(0.25, 0.0).x, p.y * 7.5));",
+    "  float band = smoothstep(0.52, 0.72, cl) * smoothstep(hz + 0.03, hz + 0.22, p.y) * (1.0 - smoothstep(0.45, 0.9, p.y));",
+    "  vec3 lit = mix(vec3(0.30, 0.13, 0.26), vec3(1.0, 0.58, 0.36), exp(-d * 1.6));",
+    "  return mix(c, lit, band * 0.8);",
+    "}",
+    "vec3 sunsetSea(vec2 p, float hz, vec2 sun){",
+    "  float depth = hz - p.y;",
+    "  float persp = 1.0 / (depth + 0.04);",
+    "  vec3 c = sunsetGrad(hz + depth * 0.7, hz) * 0.42 + vec3(0.02, 0.025, 0.07);",
+    // onde: increspature orizzontali, più fitte all'orizzonte
+    "  vec2 rp = vec2(p.x * persp * 0.9, persp * 2.2 + 0.0);",
+    "  float wv = noise(rp * vec2(3.0, 9.0) + cyc(0.8, 0.0));",
+    "  c *= 0.8 + 0.4 * wv;",
+    // scia del sole: più larga verso chi guarda, scintille animate
+    "  float bandW = 0.025 + depth * 0.32;",
+    "  float trail = exp(-pow((p.x - sun.x) / bandW, 2.0));",
+    "  float g = pow(noise(rp * vec2(26.0, 14.0) + cyc(2.2, 1.0)), 9.0);",
+    "  c += vec3(1.0, 0.70, 0.42) * trail * (0.22 + 3.2 * g) * exp(-depth * 1.6);",
+    "  return c;",
+    "}",
+    "vec3 sunsetScene(vec2 p){",
+    "  float flip = mod(floor(u_seed * 3.0), 2.0) < 0.5 ? 1.0 : -1.0;",
+    "  vec2 q = vec2(p.x * flip, p.y);",
+    "  float hz = -0.10;",
+    "  vec2 sun = vec2(0.12, hz + 0.15 + 0.05 * fract(u_seed));",
+    "  vec3 c = q.y > hz ? sunsetSky(q, hz, sun) : sunsetSea(q, hz, sun);",
+    // raggi dal sole, che passano dietro le palme (le palme vengono disegnate sopra)
+    "  vec2 dv = q - sun;",
+    "  float ang = atan(dv.y, dv.x), dist = length(dv);",
+    "  float rays = (0.55 + 0.45 * sin(ang * 16.0 + 1.2 * sin(ph1())) * sin(ang * 7.0 - ph1())) * exp(-dist * 2.4);",
+    "  c += vec3(1.0, 0.70, 0.44) * rays * 0.30 * smoothstep(hz - 0.05, hz + 0.05, q.y);",
+    "  float sway = ph1();",
+    // una palma protagonista in primo piano e un isolotto lontano con piccole palme sull'orizzonte
+    "  float m = palm(q, vec2(-0.62, -1.20), vec2(-0.17, 0.40), 0.22, 1.0, sway);",
+    "  float isl = smoothstep(0.0, -0.004, (q.y - hz) - 0.022 * (1.0 - pow(clamp((q.x - 0.30) / 0.11, -1.0, 1.0), 2.0)));",
+    "  isl *= step(0.19, q.x) * step(q.x, 0.41) * step(hz - 0.01, q.y);",
+    "  m = max(m, isl);",
+    "  m = max(m, palm(q, vec2(0.27, hz + 0.01), vec2(0.285, hz + 0.085), 0.01, 0.13, sway + 0.6));",
+    "  m = max(m, palm(q, vec2(0.33, hz + 0.01), vec2(0.315, hz + 0.105), -0.01, 0.16, sway + 2.1));",
+    "  m = max(m, palm(q, vec2(0.36, hz + 0.008), vec2(0.372, hz + 0.07), 0.01, 0.11, sway + 1.2));",
+    "  float sand = smoothstep(-0.70, -0.78, q.y + 0.035 * sin(q.x * 4.0 + 1.0));",
+    "  c = mix(c, vec3(0.035, 0.022, 0.03), sand);",
+    // controluce: le sagome hanno un filo di luce calda sul lato verso il sole
+    "  c = mix(c, vec3(0.022, 0.012, 0.02) + vec3(0.35, 0.18, 0.08) * exp(-dist * 2.5) * 0.15, m);",
+    "  return c;",
+    "}",
+    // --- Autostrada di notte vista dall'alto ---
+    "vec3 highwayScene(vec2 p){",
+    "  float t01 = u_t / u_loop;",
+    "  vec2 g = p * 7.0 + u_seed * 3.0;",
+    "  vec2 cell = floor(g), f = fract(g);",
+    "  float edge = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y));",
+    "  vec3 c = vec3(0.018, 0.021, 0.027);",
+    // tetti degli isolati, strade secondarie con i lampioni agli incroci
+    "  c += vec3(0.012, 0.013, 0.016) * hash(cell) * smoothstep(0.05, 0.09, edge);",
+    "  vec2 sub = fract(g * 3.0); vec2 subc = floor(g * 3.0);",
+    "  c += vec3(0.010, 0.011, 0.014) * hash(subc + 3.1) * smoothstep(0.08, 0.15, min(min(sub.x, 1.0 - sub.x), min(sub.y, 1.0 - sub.y)));",
+    // finestre e insegne: tanti piccoli punti caldi o freddi
+    "  vec2 wc = floor(g * 22.0); float wh = hash(wc + 2.3);",
+    "  c += mix(vec3(1.0, 0.75, 0.45), vec3(0.6, 0.8, 1.0), step(0.7, hash(wc + 9.1))) * step(0.955, wh) * smoothstep(0.32, 0.0, length(fract(g * 22.0) - 0.5)) * 0.35;",
+    "  vec2 corner = abs(f - 0.5) - 0.5;",
+    "  float lampC = length(min(abs(f), abs(1.0 - f)));",
+    "  c += vec3(1.0, 0.58, 0.22) * (exp(-lampC * 16.0) * 0.10 + exp(-lampC * 140.0) * 0.9);",
+    "  vec2 lc = floor(g * 8.0); float lh = hash(lc + 7.0);",
+    "  c += vec3(1.0, 0.82, 0.6) * step(0.988, lh) * smoothstep(0.3, 0.0, length(fract(g * 8.0) - 0.5)) * (0.6 + 0.4 * sin(2.0 * ph1() + lh * 40.0));",
+    // l'autostrada curva, sei corsie
+    "  float cx = 0.10 * sin(p.y * 1.3 + 0.5 + u_seed) + 0.05 * sin(p.y * 2.9 + 1.0);",
+    "  float dx = p.x - cx, hw = 0.125;",
+    "  float road = 1.0 - smoothstep(hw, hw + 0.004, abs(dx));",
+    "  c = mix(c, vec3(0.03, 0.031, 0.036), road);",
+    "  c += vec3(0.6, 0.58, 0.5) * (1.0 - smoothstep(0.003, 0.006, abs(dx))) * 0.12;",
+    "  float dash = step(0.45, fract(p.y * 16.0));",
+    "  for (int k = 0; k < 2; k++){ float lx = 0.0375 + float(k) * 0.035; c += vec3(0.5) * (1.0 - smoothstep(0.0012, 0.0026, abs(abs(dx) - lx))) * dash * 0.16 * road; }",
+    "  c += vec3(0.6, 0.58, 0.5) * (1.0 - smoothstep(0.0015, 0.003, abs(abs(dx) - hw + 0.004))) * 0.18;",
+    // lampioni al sodio sui bordi: pozza di luce sull'asfalto e punto luminoso
+    "  float ly = (fract(p.y * 3.0) - 0.5) / 3.0;",
+    "  float ld = length(vec2(abs(dx) - hw + 0.012, ly));",
+    "  c += vec3(1.0, 0.56, 0.20) * (exp(-ld * 28.0) * 0.22 + exp(-ld * 420.0) * 2.2);",
+    // auto in esposizione lunga: fari bianchi che salgono, luci rosse che scendono
+    "  for (int i = 0; i < 6; i++){",
+    "    float fi = float(i);",
+    "    float up = fi < 3.0 ? 1.0 : -1.0;",
+    "    float lane = mod(fi, 3.0);",
+    "    float off = -up * (0.02 + lane * 0.035);",
+    "    float d = abs(dx - off);",
+    "    float line = exp(-d * d / 0.0000085) + 0.18 * exp(-d * d / 0.00009);",
+    "    float speed = 3.0 + lane;",
+    "    float s = up * p.y * 2.4 - t01 * speed + fi * 0.37;",
+    "    float id = floor(s), fr = fract(s);",
+    "    float present = step(0.12, hash(vec2(id, fi)));",
+    "    float len = 0.45 + 0.45 * hash(vec2(id, fi + 9.0));",
+    "    float trail = smoothstep(1.0 - len, 1.0, fr) * (0.35 + 0.65 * smoothstep(0.9, 1.0, fr));",
+    "    vec3 col = up > 0.0 ? vec3(1.0, 0.92, 0.78) : vec3(1.0, 0.13, 0.08);",
+    "    c += col * line * trail * present * (up > 0.0 ? 2.2 : 1.9);",
+    "  }",
+    // una rampa che si stacca e curva verso destra, con le sue auto
+    "  float ry = p.y - 0.25;",
+    "  float rx = cx + 0.13 + 0.55 * max(ry, 0.0) * max(ry, 0.0) * 2.2;",
+    "  float rd = abs(p.x - rx);",
+    "  float onRamp = step(0.0, ry) * step(ry, 0.75);",
+    "  c = mix(c, vec3(0.03, 0.031, 0.036), (1.0 - smoothstep(0.022, 0.026, rd)) * onRamp);",
+    "  float rs = ry * 3.0 - t01 * 3.0;",
+    "  float rtrail = smoothstep(0.4, 1.0, fract(rs)) * step(0.3, hash(vec2(floor(rs), 31.0)));",
+    "  c += vec3(1.0, 0.92, 0.78) * exp(-rd * rd / 0.0000085) * rtrail * onRamp * 1.8;",
+    "  return c;",
+    "}",
+    // --- Aurora sul lago ---
+    "vec3 auroraC(vec2 p, vec3 ca, vec3 cb){",
+    "  vec3 col = vec3(0.0);",
+    "  for (int i = 0; i < 3; i++){",
+    "    float fi = float(i);",
+    "    float x = p.x - (fi - 1.0) * 0.30 + 0.55 * (fbm(vec2(p.y * 1.1 + fi * 3.1 + u_seed, fi * 1.7) + cyc(0.40, fi * 2.0)) - 0.5);",
+    "    float curtain = exp(-x * x * 30.0);",
+    "    float rays = 0.25 + 1.2 * pow(noise(vec2(x * 40.0 + fi * 7.0 + u_seed * 3.0, p.y * 0.6) + cyc(0.9, fi)), 2.0);",
+    "    float fade = smoothstep(-0.55, 0.15, p.y) * smoothstep(1.2, 0.3, p.y);",
+    "    col += mix(ca, cb, smoothstep(0.1, 0.95, p.y + fi * 0.08)) * curtain * rays * fade * 0.75;",
+    "  }",
+    "  return col;",
+    "}",
+    "float ridge1(float x){ return -0.04 + 0.20 * fbm3(vec2(x * 1.7 + u_seed, 1.0)); }",
+    "float ridge2(float x){ return -0.13 + 0.12 * fbm3(vec2(x * 3.0 + 5.0 + u_seed, 2.0)); }",
+    "vec3 lakeAbove(vec2 q, vec2 uv, float withStars){",
+    "  vec3 c = mix(vec3(0.03, 0.06, 0.10), vec3(0.005, 0.01, 0.03), smoothstep(-0.2, 1.0, q.y));",
+    "  c += vec3(0.9) * stars(uv, 0.005) * withStars;",
+    "  c += auroraC(q, vec3(0.22, 1.0, 0.58), vec3(0.62, 0.30, 0.95));",
+    "  float r1 = ridge1(q.x), r2 = ridge2(q.x);",
+    "  c = mix(c, vec3(0.025, 0.04, 0.06) + auroraC(vec2(q.x, 0.4), vec3(0.22, 1.0, 0.58), vec3(0.6)) * 0.05, smoothstep(r1 + 0.002, r1 - 0.002, q.y));",
+    "  c = mix(c, vec3(0.008, 0.012, 0.018), smoothstep(r2 + 0.002, r2 - 0.002, q.y));",
+    "  return c;",
+    "}",
+    "vec3 lakeScene(vec2 p, vec2 uv){",
+    "  float hz = -0.20;",
+    "  if (p.y > hz) return lakeAbove(p, uv, 1.0);",
+    // il lago riflette cielo, aurora e montagne, increspato da onde leggere
+    "  float depth = hz - p.y;",
+    "  float rip = (noise(vec2(p.x * 26.0, p.y * 140.0) + cyc(1.2, 0.0)) - 0.5) * 0.012 * (0.4 + depth * 2.0);",
+    "  vec2 m = vec2(p.x + rip, hz + depth * 1.1);",
+    "  vec3 c = lakeAbove(m, uv, 0.0) * 0.62 + vec3(0.004, 0.008, 0.014);",
+    "  c = mix(c, vec3(0.006, 0.008, 0.012), smoothstep(-0.80, -0.92, p.y + 0.03 * sin(p.x * 5.0)));",
+    "  return c;",
+    "}",
     "vec3 tex(vec2 uv){ return u_hasTex > 0.5 ? texture2D(u_tex, uv).rgb : u_bg; }",
     "vec3 photo(vec2 uv){",
     "  float asp = u_res.x / u_res.y;",
@@ -1212,6 +1429,9 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     "  if (u_mode == 0) col = energy(p);",
     "  else if (u_mode == 1) col = aurora(p, uv);",
     "  else if (u_mode == 5) col = lightStreaks(p, uv);",
+    "  else if (u_mode == 7) col = sunsetScene(p);",
+    "  else if (u_mode == 8) col = highwayScene(p);",
+    "  else if (u_mode == 9) col = lakeScene(p, uv);",
     "  else col = photo(uv);",
     "  gl_FragColor = vec4(col * u_enc, 1.0);",
     "}"
@@ -1518,6 +1738,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
       sc.appendChild(b);
     });
     var fc = $("fxChips"); fc.innerHTML = "";
+    $("fxGroup").hidden = PHOTO_MODES.indexOf(GL_SCENES[wpPrefs.style]) < 0;
     FX.forEach(function (f) {
       var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = f.name;
       b.setAttribute("aria-pressed", String(wpPrefs.fx === f.id));

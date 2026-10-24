@@ -18,13 +18,13 @@ const COUNT = parseInt(process.argv[2] || "24", 10);
   for (let i = 0; i < COUNT; i++) {
     const data = await page.evaluate(async (i) => {
       const A = window.EdgeApp;
-      // foto con effetti di luce sopra: atmosfera, effetto e scatto ruotano
-      const combos = [["tropici", "raggi", 0], ["strade", "scie", 7], ["tropici", "aurora", 28], ["spazio", "aurora", 0], ["tropici", "scie", 14],
-        ["strade", "energia", 0], ["tropici", "energia", 7], ["strada", "scie", 0], ["strade", "aurora", 7], ["tropici", "scie", 0], ["vetro", "auto", 7], ["casa", "auto", 4242]];
+      // scene create da zero, con varianti di inquadratura e tavolozza
+      const combos = [["tramonto", "auto", 0], ["autostrada", "auto", 0], ["lago", "auto", 0], ["tramonto", "auto", 40], ["autostrada", "auto", 11], ["lago", "auto", 23],
+        ["tramonto", "auto", 13], ["autostrada", "auto", 29], ["lago", "auto", 47], ["casa", "auto", 4242], ["tramonto", "auto", 71], ["vetro", "auto", 7]];
       const [style, fx, seed0] = combos[i % combos.length];
       const calm = i % 2 === 0;
       const o = {
-        seed: seed0 + (i >= combos.length ? 7 : 0), style, fx, pal: ["nero", "notte", "nero", "bordeaux"][i % 4],
+        seed: seed0 + (i >= combos.length ? 101 : 0), style, fx, pal: ["nero", "notte", "bottiglia", "bordeaux"][i % 4],
         quote: calm ? A.CALM[(i * 5) % A.CALM.length] : A.QUOTES[(i * 7) % A.QUOTES.length],
         label: calm ? "Mente calma" : "Regola del mestiere", date: null, why: false, streak: false,
       };

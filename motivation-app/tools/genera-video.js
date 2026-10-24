@@ -10,14 +10,12 @@ const APP = path.resolve(__dirname, "..");
 const OUT = path.join(APP, "videos");
 const FPS = 60;
 const VIDEOS = [
-  { name: "palme-scie-di-luce", style: "tropici", fx: "scie", pal: "nero", seed: 0, calm: 4 },
-  { name: "palme-aurora", style: "tropici", fx: "aurora", pal: "notte", seed: 28, calm: 1 },
-  { name: "palme-fasci-di-luce", style: "tropici", fx: "raggi", pal: "nero", seed: 0, calm: 5 },
-  { name: "palme-energia", style: "tropici", fx: "energia", pal: "bordeaux", seed: 14, calm: 6 },
-  { name: "strade-notte-scie", style: "strade", fx: "scie", pal: "nero", seed: 7, calm: 0 },
-  { name: "strade-notte-aurora", style: "strade", fx: "aurora", pal: "notte", seed: 7, quote: 2 },
-  { name: "lungolago-energia", style: "strade", fx: "energia", pal: "notte", seed: 0, quote: 1 },
-  { name: "astronauta-aurora", style: "spazio", fx: "aurora", pal: "bottiglia", seed: 0, calm: 2 },
+  { name: "tramonto-tropicale", style: "tramonto", pal: "nero", seed: 0, calm: 4 },
+  { name: "tramonto-tropicale-isola", style: "tramonto", pal: "bordeaux", seed: 40, calm: 0 },
+  { name: "autostrada-di-notte", style: "autostrada", pal: "nero", seed: 0, quote: 2 },
+  { name: "autostrada-di-notte-blu", style: "autostrada", pal: "notte", seed: 11, calm: 6 },
+  { name: "aurora-sul-lago", style: "lago", pal: "notte", seed: 0, calm: 1 },
+  { name: "aurora-sul-lago-verde", style: "lago", pal: "bottiglia", seed: 23, calm: 3 },
   { name: "casa-pioggia", style: "casa", seed: 4242, calm: 0 },
   { name: "pioggia-vetro", style: "vetro", seed: 7, calm: 1 },
 ];
