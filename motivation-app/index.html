@@ -620,7 +620,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   function fmtDur(m) { var h = Math.floor(m / 60), r = m % 60; return (h ? h + "h " : "") + r + "m"; }
   function marketStatus(tz, open, close) {
     var z = zoneNow(tz);
-    if (!z) return { cls: "", txt: "orario non disponibile" };
+    if (!z) return { cls: "", txt: "Orario non disponibile" };
     if (z.wd === "Sat" || z.wd === "Sun") return { cls: "", txt: "Chiusa nel weekend" };
     if (z.min >= open && z.min < close) return { cls: "open", txt: "Aperta, chiude tra " + fmtDur(close - z.min) };
     if (z.min < open) return { cls: open - z.min <= 90 ? "pre" : "", txt: "Apre tra " + fmtDur(open - z.min) };
@@ -1023,7 +1023,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     $("fsClose").onclick = hideFs;
     $("fsImg").onclick = function () { $("fs").classList.toggle("clean"); };
     $("btnSave").hidden = inFrame;
-    if (!inFrame) $("saveHint").textContent = "“Salva / condividi” apre il menu del telefono: scegli “Usa come sfondo” o “Salva immagine”.";
+    if (!inFrame) $("saveHint").textContent = "“Salva o condividi” apre il menu del telefono: scegli “Usa come sfondo” o “Salva immagine”.";
     $("btnSave").onclick = saveWp;
     $("optWhy").checked = wpPrefs.why; $("optStreak").checked = wpPrefs.streak; $("optRotate").value = wpPrefs.rotate;
     $("optWhy").onchange = function () { wpPrefs.why = this.checked; store.set("wp", wpPrefs); drawWp(); };
