@@ -291,7 +291,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
         <button class="btn primary" id="btnNewWp" type="button">Nuovo sfondo</button>
         <button class="btn" id="btnFull" type="button">Schermo intero</button>
         <button class="btn" id="btnSave" type="button" hidden>Salva o condividi</button>
-        <button class="btn" id="btnVideo" type="button" hidden>Registra video di 8 secondi</button>
+        <button class="btn" id="btnVideo" type="button" hidden>Registra il video animato</button>
       </div>
       <p class="hint" id="saveHint">Per salvarlo apri "Schermo intero" e tieni premuto sull'immagine, oppure fai uno screenshot quando i suggerimenti spariscono.</p>
     </div>
@@ -337,14 +337,14 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
       <div class="group">
         <span class="label">Sfondi animati</span>
         <ul class="steps">
-          <li><b>Video pronti:</b> nella cartella <b>videos</b> dell'app ci sono animazioni da 8 secondi a 60 fotogrammi al secondo, con l'onda d'urto all'accensione. Dall'app installata puoi registrarne una tua con "Registra video di 8 secondi".</li>
+          <li><b>Video pronti:</b> nella cartella <b>videos</b> dell'app ci sono animazioni in alta definizione a 60 fotogrammi al secondo. Dall'app installata puoi registrarne una tua con "Registra il video animato".</li>
           <li><b>Samsung:</b> Impostazioni, Sfondo e stile, Schermata di blocco, <b>Galleria</b>: scegli il video. Parte ogni volta che accendi lo schermo.</li>
           <li><b>Altri Android:</b> usa un'app per video come sfondo animato, per esempio Video Live Wallpaper.</li>
           <li><b>iPhone:</b> iOS non accetta video come sfondo. Trasformalo in Live Photo con un'app come intoLive, poi Impostazioni, Sfondo, Aggiungi nuovo sfondo, Foto: si anima quando risvegli il telefono.</li>
         </ul>
       </div>
     </div>
-    <p class="hint">Foto: NASA (pubblico dominio), WordPress Photo Directory e StockSnap (CC0). Flusso di energia, aurora e casa sotto la pioggia sono generati dall'app.</p>
+    <p class="hint">Foto: NASA (pubblico dominio) e WordPress Photo Directory (CC0). Flusso di energia, aurora e casa sotto la pioggia sono generati dall'app.</p>
   </section>
 
   <!-- RITUALE -->
@@ -555,7 +555,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var STYLES = [
     { id: "energia", name: "Flusso di energia" },
     { id: "aurora", name: "Aurora" },
-    { id: "tropici", name: "Tropici" },
+    { id: "tropici", name: "Tropici al tramonto" },
     { id: "casa", name: "Casa sotto la pioggia" },
     { id: "vetro", name: "Pioggia sul vetro" },
     { id: "spazio", name: "Spazio" },
@@ -805,14 +805,14 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     vetro: ["photos/pioggia-vetro.jpg", "photos/pioggia-auto-notte.jpg", "photos/pioggia-finestrino.jpg"],
     spazio: ["photos/astronauta-iss.jpg", "photos/stazione-alba.jpg", "photos/astronauta-casco.jpg"],
     strada: ["photos/auto-gtr.jpg", "photos/auto-ferrari.jpg", "photos/auto-datsun.jpg"],
-    tropici: ["photos/tropici-tramonto.jpg", "photos/tropici-palme.jpg", "photos/tropici-nuvole.jpg", "photos/tropici-isola.jpg"]
+    tropici: ["photos/tropici-controluce.jpg", "photos/tropici-cielo-rosa.jpg", "photos/tropici-crepuscolo.jpg", "photos/tropici-laguna.jpg", "photos/tropici-viola.jpg"]
   };
   var imgCache = {};
   function loadImg(src) {
     if (imgCache[src]) return imgCache[src].p;
     var img = new Image(), rec = { img: img, ok: false };
     rec.p = new Promise(function (res) {
-      img.onload = function () { rec.ok = true; res(img); };
+      img.onload = function () { rec.sun = findSun(img); rec.ok = true; res(img); };
       img.onerror = function () { res(null); };
     });
     imgCache[src] = rec; img.src = src;
@@ -945,8 +945,8 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     var pal = PALETTES.filter(function (p) { return p.id === o.pal; })[0] || PALETTES[0];
     var acc = pal.id === "pietra" ? "#d4a95c" : pal.accent, ink = "#f5f2ec";
     var X = 104, maxW = W - X * 2, a = 1, rise = 0;
-    if (o.intro) { var q = easeOut(clamp01((t - 0.3) / 1.4)); a = q; rise = (1 - q) * 40; }
-    if (o.outro) a *= clamp01((LOOP - t) / 0.7);
+    if (o.intro) { var q = easeOut(clamp01((t - 0.7) / 1.6)); a = q; rise = (1 - q) * 28; }
+    if (o.outro) a *= clamp01((loopOf(o) - t) / 0.7);
     var size = 100, lines;
     do {
       g.font = "400 " + size + "px 'Instrument Serif', Georgia, serif";
@@ -984,8 +984,10 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     }
     g.restore();
   }
-  /* ---------- motion design in WebGL: flusso di energia, aurora, tropici, onda d'urto ---------- */
-  var GL_SCENES = { energia: 0, aurora: 1, tropici: 2 };
+  /* ---------- motion design in WebGL: scena, glow multi-raggio, color correction ---------- */
+  // Linguaggio di motion "Premium": cicli lenti, nessun rimbalzo, la luce è la protagonista.
+  var GL_LOOP = 10;
+  var GL_SCENES = { energia: 0, aurora: 1, tropici: 2, spazio: 3, strada: 4 };
   // fondo, colore A, colore B, luce piena: uno per ogni tavolozza
   var GL_COLORS = {
     nero: ["#060608", "#d4a95c", "#c0653f", "#fff4de"],
@@ -994,160 +996,353 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     notte: ["#02050c", "#4fa3ff", "#3ee6c8", "#eaf4ff"],
     pietra: ["#0a0a0b", "#d9d4ca", "#8fa8b8", "#ffffff"]
   };
-  // altezza dell'orizzonte in ogni foto tropicale (0 = fondo, 1 = cima): sotto c'è l'acqua che tremola
-  var HORIZON = { "photos/tropici-tramonto.jpg": 0.41, "photos/tropici-palme.jpg": 0.39, "photos/tropici-nuvole.jpg": 0.41, "photos/tropici-isola.jpg": 0.61 };
-  var GL_VERT = "attribute vec2 a; varying vec2 v_uv; void main(){ v_uv = a * 0.5 + 0.5; gl_Position = vec4(a, 0.0, 1.0); }";
-  var GL_FRAG = [
+  // color correction per tavolozza: tinta delle ombre, due tinte delle luci tra cui il colore oscilla, saturazione, contrasto
+  var GRADES = {
+    nero: { sh: [0.90, 1.00, 1.07], hiA: [1.10, 1.00, 0.86], hiB: [1.13, 0.95, 0.92], sat: 1.10, con: 0.28 },
+    bottiglia: { sh: [0.88, 1.04, 1.00], hiA: [1.04, 1.07, 0.90], hiB: [0.97, 1.08, 1.00], sat: 1.12, con: 0.26 },
+    bordeaux: { sh: [1.05, 0.90, 0.98], hiA: [1.12, 0.98, 0.90], hiB: [1.10, 0.93, 1.02], sat: 1.12, con: 0.28 },
+    notte: { sh: [0.88, 0.96, 1.13], hiA: [0.98, 1.04, 1.10], hiB: [1.07, 1.00, 1.02], sat: 1.06, con: 0.26 },
+    pietra: { sh: [0.98, 0.99, 1.02], hiA: [1.04, 1.02, 0.98], hiB: [1.02, 1.02, 1.01], sat: 0.86, con: 0.30 }
+  };
+  // per scena: soglia del glow, peso del glow stretto, largo e della scia anamorfica, quanto comprimere le luci
+  var GLOW = [
+    { thr: 0.14, w: [1.15, 0.95, 0.12], tm: 1.0 },
+    { thr: 0.28, w: [0.85, 0.85, 0.05], tm: 1.0 },
+    { thr: 0.90, w: [0.60, 0.55, 0.25], tm: 0.55 },
+    { thr: 0.93, w: [0.45, 0.40, 0.30], tm: 0.45 },
+    { thr: 0.93, w: [0.40, 0.35, 0.45], tm: 0.45 }
+  ];
+  // altezza dell'orizzonte nelle foto tropicali (0 = fondo, 1 = cima): sotto c'è l'acqua che tremola
+  var HORIZON = { "photos/tropici-controluce.jpg": 0.0, "photos/tropici-cielo-rosa.jpg": 0.0, "photos/tropici-crepuscolo.jpg": 0.1, "photos/tropici-laguna.jpg": 0.47, "photos/tropici-viola.jpg": 0.0 };
+
+  var GLSL_COMMON = [
     "precision highp float;",
     "varying vec2 v_uv;",
-    "uniform vec2 u_res; uniform float u_t; uniform float u_loop; uniform float u_wave; uniform vec2 u_center;",
-    "uniform int u_mode; uniform float u_seed; uniform vec3 u_bg; uniform vec3 u_a; uniform vec3 u_b; uniform vec3 u_hot;",
-    "uniform sampler2D u_tex; uniform float u_hasTex; uniform float u_horizon;",
     "float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }",
     "float noise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);",
     "  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y); }",
     "float fbm(vec2 p){ float v = 0.0, a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6);",
     "  for (int i = 0; i < 5; i++){ v += a * noise(p); p = m * p; a *= 0.5; } return v; }",
-    // movimento su un cerchio: dopo un ciclo tutto torna identico, il video si ripete senza stacchi
     "float fbm3(vec2 p){ float v = 0.0, a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6);",
     "  for (int i = 0; i < 3; i++){ v += a * noise(p); p = m * p; a *= 0.5; } return v; }",
+    "float luma(vec3 c){ return dot(c, vec3(0.2126, 0.7152, 0.0722)); }"
+  ].join("\n");
+  var GL_VERT = "attribute vec2 a; varying vec2 v_uv; void main(){ v_uv = a * 0.5 + 0.5; gl_Position = vec4(a, 0.0, 1.0); }";
+
+  var FRAG_SCENE = GLSL_COMMON + "\n" + [
+    "uniform vec2 u_res; uniform float u_t; uniform float u_loop; uniform int u_mode; uniform float u_seed; uniform float u_enc;",
+    "uniform vec3 u_bg; uniform vec3 u_a; uniform vec3 u_b; uniform vec3 u_hot;",
+    "uniform sampler2D u_tex; uniform float u_hasTex; uniform float u_horizon; uniform vec2 u_sun;",
+    // movimento su un cerchio: dopo un ciclo tutto torna identico, il loop non ha stacchi
     "vec2 cyc(float r, float ph){ float a = 6.2831853 * (u_t / u_loop) + ph; return vec2(cos(a), sin(a)) * r; }",
+    "float ph1(){ return 6.2831853 * u_t / u_loop; }",
     "vec3 energy(vec2 p){",
-    "  p += u_seed * 0.1;",
-    "  vec2 q = vec2(fbm3(p * 0.7 + cyc(0.45, 0.0)), fbm3(p * 0.7 + vec2(5.2, 1.3) + cyc(0.45, 2.1)));",
+    // la variante cambia il disegno del rumore, non la posizione: i fiumi restano sempre nell'inquadratura
+    "  vec2 q = vec2(fbm3(p * 0.7 + u_seed + cyc(0.45, 0.0)), fbm3(p * 0.7 + vec2(5.2, 1.3) + u_seed + cyc(0.45, 2.1)));",
     "  float warp = fbm3(p * 0.9 + 1.6 * q + cyc(0.3, 4.0));",
     "  float along = p.x * 0.45 - p.y * 0.9;",
-    "  float ph = 6.2831853 * 2.0 * u_t / u_loop;",
-    "  vec3 col = u_bg;",
-    // due fiumi di energia in diagonale che si piegano; dentro scorrono fili paralleli e impulsi
-    "  for (int i = 0; i < 2; i++){",
-    "    float fi = float(i);",
-    "    float axis = p.x * 0.9 + p.y * 0.45 + (warp - 0.5) * (1.9 - fi * 0.6) + fi * 0.75 - 0.2;",
-    "    float env = exp(-axis * axis * (8.0 + fi * 6.0));",
-    "    float band = abs(sin(axis * (30.0 + fi * 12.0)));",
-    "    float glow = 0.07 / (band + 0.07);",
-    "    float pulse = 0.5 + 0.5 * sin(along * 4.0 - ph + warp * 4.0 + fi * 2.0);",
-    "    vec3 tint = mix(u_a, u_b, clamp(q.x * 1.6 - 0.3 + fi * 0.5, 0.0, 1.0));",
-    "    float k = 1.0 - fi * 0.45;",
-    "    col += tint * 0.32 * env * env * (0.6 + 0.4 * pulse) * k;",
-    "    col += tint * pow(glow, 2.0) * env * (0.8 + 1.3 * pulse) * k;",
-    "    col += u_hot * pow(glow, 10.0) * env * pulse * 1.2 * k;",
-    "  }",
-    "  return col;",
-    "}",
-    "vec3 aurora(vec2 p){",
-    "  p += u_seed * 0.2;",
     "  vec3 col = u_bg;",
     "  for (int i = 0; i < 3; i++){",
     "    float fi = float(i);",
-    "    float x = p.x - (fi - 1.0) * 0.36 + 0.5 * (fbm(vec2(p.y * 1.2 + fi * 3.1, fi * 1.7) + cyc(0.45, fi * 2.0)) - 0.5);",
-    "    float curtain = exp(-x * x * 34.0);",
-    "    float rays = 0.25 + 0.75 * pow(noise(vec2(x * 36.0 + fi * 7.0, p.y * 0.7) + cyc(0.9, fi)), 2.0) * 1.6;",
-    "    float fade = smoothstep(-1.15, 0.1, p.y) * smoothstep(1.25, 0.15, p.y);",
-    "    vec3 c = mix(u_a, u_b, clamp(p.y * 0.55 + 0.45 + fi * 0.12, 0.0, 1.0));",
-    "    col += c * curtain * rays * fade * 0.75;",
+    "    float axis = p.x * 0.9 + p.y * 0.45 + (warp - 0.5) * (1.9 - fi * 0.5) + (fi - 1.0) * 0.8;",
+    "    float env = exp(-axis * axis * (8.0 + fi * 5.0));",
+    "    float band = abs(sin(axis * (30.0 + fi * 10.0)));",
+    "    float glow = 0.05 / (band + 0.05);",
+    "    float pulse = 0.5 + 0.5 * sin(along * 4.0 - 2.0 * ph1() + warp * 4.0 + fi * 2.1);",
+    // i colori scorrono lentamente lungo il ciclo
+    "    vec3 tint = mix(u_a, u_b, clamp(q.x * 1.6 - 0.3 + 0.4 * sin(ph1() + fi * 1.9), 0.0, 1.0));",
+    "    float k = fi == 1.0 ? 1.0 : 0.55;",
+    "    col += tint * 0.18 * env * env * (0.6 + 0.4 * pulse) * k;",
+    "    col += tint * pow(glow, 2.2) * env * (0.9 + 1.4 * pulse) * k;",
+    "    col += u_hot * pow(glow, 10.0) * env * pulse * 1.4 * k;",
     "  }",
-    "  col += u_hot * 0.035 * fbm(p * 3.0 + cyc(0.3, 0.0));",
     "  return col;",
     "}",
-    "vec3 photo(vec2 uv){",
-    "  float water = smoothstep(u_horizon + 0.01, u_horizon - 0.06, uv.y);",
-    "  vec2 d = vec2(fbm(uv * vec2(5.0, 16.0) + cyc(0.5, 0.0)), fbm(uv * vec2(5.0, 16.0) + 3.3 + cyc(0.5, 1.5))) - 0.5;",
-    "  float z = 1.035 + 0.015 * sin(6.2831853 * u_t / u_loop);",
-    "  vec2 tuv = (uv + d * 0.014 * water - 0.5) / z + 0.5;",
-    "  vec3 c = u_hasTex > 0.5 ? texture2D(u_tex, tuv).rgb : u_bg;",
-    "  float glint = pow(noise(uv * vec2(160.0, 360.0) + cyc(2.5, 0.0)), 22.0) * water;",
-    "  c += glint * u_hot * 2.2;",
-    "  c = mix(c, c * c * (3.0 - 2.0 * c), 0.3);",
-    "  return c;",
+    "float stars(vec2 uv, float density){",
+    "  vec2 g = floor(uv * u_res / 3.0);",
+    "  float h = hash(g + u_seed);",
+    "  return step(1.0 - density, h) * (0.45 + 0.55 * sin(2.0 * ph1() + h * 60.0)) * fract(h * 97.0);",
     "}",
-    "vec3 scene(vec2 uv){",
-    "  if (u_mode == 2) return photo(uv);",
-    "  vec2 p = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0) * 2.0;",
-    "  if (u_mode == 1) return aurora(p);",
-    "  return energy(p);",
+    "vec3 aurora(vec2 p, vec2 uv){",
+    "  vec3 col = u_bg;",
+    "  float sum = 0.0;",
+    "  for (int i = 0; i < 3; i++){",
+    "    float fi = float(i);",
+    "    float x = p.x - (fi - 1.0) * 0.36 + 0.5 * (fbm(vec2(p.y * 1.2 + fi * 3.1 + u_seed, fi * 1.7) + cyc(0.45, fi * 2.0)) - 0.5);",
+    "    float curtain = exp(-x * x * 34.0);",
+    "    float rays = 0.25 + 1.2 * pow(noise(vec2(x * 36.0 + fi * 7.0 + u_seed * 3.0, p.y * 0.7) + cyc(0.9, fi)), 2.0);",
+    "    float fade = smoothstep(-1.15, 0.1, p.y) * smoothstep(1.25, 0.15, p.y);",
+    "    vec3 c = mix(u_a, u_b, clamp(p.y * 0.55 + 0.45 + fi * 0.12 + 0.25 * sin(ph1() + fi), 0.0, 1.0));",
+    "    col += c * curtain * rays * fade * 0.8;",
+    "    sum += curtain * fade;",
+    "  }",
+    "  col += vec3(0.9) * stars(uv, 0.004) * (1.0 - clamp(sum, 0.0, 1.0));",
+    "  return col;",
+    "}",
+    "vec3 tex(vec2 uv){ return u_hasTex > 0.5 ? texture2D(u_tex, uv).rgb : u_bg; }",
+    "vec3 photo(vec2 uv){",
+    "  float asp = u_res.x / u_res.y;",
+    "  float water = u_horizon > 0.02 ? smoothstep(u_horizon + 0.01, u_horizon - 0.06, uv.y) : 0.0;",
+    "  vec2 d = vec2(fbm3(uv * vec2(5.0, 16.0) + cyc(0.5, 0.0)), fbm3(uv * vec2(5.0, 16.0) + 3.3 + cyc(0.5, 1.5))) - 0.5;",
+    // spinta lenta in avanti, come una carrellata
+    "  float z = 1.03 + 0.02 * (0.5 - 0.5 * cos(ph1()));",
+    "  vec2 tuv = (uv + d * 0.010 * water - 0.5) / z + 0.5;",
+    "  vec3 c = tex(tuv);",
+    "  float l = luma(c);",
+    "  if (u_mode == 2) {",
+    // fasci di luce volumetrici dal sole: campionano il cielo verso il sole, le palme li bloccano
+    "    vec2 sun = (u_sun - 0.5) / z + 0.5;",
+    "    vec2 dv = sun - tuv;",
+    "    float occ = 0.0;",
+    "    for (int i = 1; i <= 36; i++){",
+    "      vec2 sp = tuv + dv * (float(i) / 36.0);",
+    "      occ += smoothstep(0.30, 0.62, luma(tex(sp)));",
+    "    }",
+    "    occ /= 36.0;",
+    "    vec2 dd = dv * vec2(asp, 1.0);",
+    "    float dist = length(dd);",
+    "    float ang = atan(dd.y, dd.x);",
+    "    float shafts = 0.72 + 0.28 * sin(ang * 22.0 + 1.3 * sin(ph1())) * sin(ang * 9.0 - ph1());",
+    // due fasci larghi che ruotano lentamente e passano dietro le palme
+    "    float beams = pow(0.5 + 0.5 * sin(ang * 3.0 + ph1()), 10.0) + 0.6 * pow(0.5 + 0.5 * sin(ang * 5.0 - ph1() + 1.7), 14.0);",
+    "    float here = smoothstep(0.12, 0.45, l);",
+    "    vec3 warm = mix(u_hot, vec3(1.0, 0.72, 0.42), 0.55);",
+    // dove il cielo è già chiaro la luce aggiunta si attenua, così le alte luci non bruciano
+    "    float room = 1.0 - 0.92 * smoothstep(0.42, 0.9, l);",
+    "    c += warm * occ * occ * exp(-dist * 2.3) * (0.25 + 0.55 * shafts + 1.3 * beams) * (0.15 + 0.85 * here) * 0.8 * room;",
+    "    c += warm * exp(-dist * 9.0) * 0.55 * here * room;",
+    "    float glint = pow(noise(uv * vec2(160.0, 360.0) + cyc(2.5, 0.0)), 22.0) * water;",
+    "    c += glint * warm * 2.4;",
+    "  } else if (u_mode == 3) {",
+    "    float dark = 1.0 - smoothstep(0.04, 0.18, l);",
+    "    c += vec3(0.9) * stars(uv, 0.006) * dark;",
+    // una luce calda che attraversa la scena, come un light leak
+    "    float sweep = exp(-pow((uv.x + uv.y * 0.6 - mod(u_t / u_loop * 2.6, 2.6) + 0.5) * 3.0, 2.0));",
+    "    c += u_a * sweep * 0.18;",
+    "  } else {",
+    // una scia di luce orizzontale che scorre sulla carrozzeria
+    "    float f = mod(u_t / u_loop, 1.0);",
+    "    float x0 = -0.3 + f * 1.6;",
+    "    float streak = exp(-pow((uv.x - x0) * 2.2, 2.0)) * smoothstep(0.2, 0.9, l);",
+    "    c += u_hot * streak * 0.55;",
+    "  }",
+    "  return c;",
     "}",
     "void main(){",
     "  vec2 uv = v_uv;",
-    "  float asp = u_res.x / u_res.y;",
-    "  vec2 s = (uv - u_center) * vec2(asp, 1.0);",
-    "  float d = length(s), w = u_wave;",
-    // onda d'urto: un anello che si allarga, deforma l'immagine e separa i colori sul bordo
-    "  float R = 1.4 * (1.0 - exp(-w * 1.9));",
-    "  float amp = 0.055 * exp(-w * 1.4);",
-    "  float ring = exp(-pow((d - R) * 16.0, 2.0)) * step(0.0, w);",
-    "  vec2 dir = (d > 0.0001 ? s / d : vec2(0.0)) / vec2(asp, 1.0);",
-    "  vec2 off = dir * ring * amp;",
     "  vec3 col;",
-    "  if (ring * amp > 0.0004) {",
-    "    col.r = scene(uv - off * 1.4).r; col.g = scene(uv - off).g; col.b = scene(uv - off * 0.6).b;",
-    "  } else { col = scene(uv); }",
-    // lo schermo si accende dal centro verso i bordi, seguendo l'onda
-    "  float lit = mix(0.08, 1.0, smoothstep(R + 0.06, R - 0.14, d));",
-    "  lit = mix(lit, 1.0, smoothstep(1.4, 2.6, w));",
-    "  col *= lit;",
-    "  col += mix(u_a, u_hot, 0.5) * ring * 0.32 * exp(-w * 1.2);",
-    "  col += u_hot * exp(-d * 10.0) * exp(-w * 9.0) * 0.6;",
-    "  col *= 1.0 - 0.55 * pow(length((uv - 0.5) * vec2(1.0, 0.75)), 2.0);",
-    "  col += (hash(uv * u_res + u_t) - 0.5) / 128.0;",
-    "  gl_FragColor = vec4(col, 1.0);",
+    "  if (u_mode >= 2) col = photo(uv);",
+    "  else {",
+    "    vec2 p = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0) * 2.0;",
+    "    col = u_mode == 1 ? aurora(p, uv) : energy(p);",
+    "  }",
+    "  gl_FragColor = vec4(col * u_enc, 1.0);",
+    "}"
+  ].join("\n");
+
+  // estrae le luci sopra la soglia, con un ginocchio morbido, e scala a un quarto
+  var FRAG_BRIGHT = GLSL_COMMON + "\n" + [
+    "uniform sampler2D u_src; uniform vec2 u_texel; uniform float u_dec; uniform float u_enc; uniform float u_thr;",
+    "void main(){",
+    "  vec3 c = vec3(0.0);",
+    "  c += texture2D(u_src, v_uv + u_texel * vec2(-1.0, -1.0)).rgb;",
+    "  c += texture2D(u_src, v_uv + u_texel * vec2(1.0, -1.0)).rgb;",
+    "  c += texture2D(u_src, v_uv + u_texel * vec2(-1.0, 1.0)).rgb;",
+    "  c += texture2D(u_src, v_uv + u_texel * vec2(1.0, 1.0)).rgb;",
+    "  c *= 0.25 * u_dec;",
+    "  float l = max(c.r, max(c.g, c.b)), knee = 0.25;",
+    "  float s = clamp(l - u_thr + knee, 0.0, 2.0 * knee); s = s * s / (4.0 * knee + 0.0001);",
+    "  c *= max(s, l - u_thr) / max(l, 0.0001);",
+    "  gl_FragColor = vec4(c * u_enc, 1.0);",
+    "}"
+  ].join("\n");
+  // sfocatura gaussiana separabile, 9 campioni con il filtro lineare
+  var FRAG_BLUR = GLSL_COMMON + "\n" + [
+    "uniform sampler2D u_src; uniform vec2 u_dir;",
+    "void main(){",
+    "  vec3 c = texture2D(u_src, v_uv).rgb * 0.2270270270;",
+    "  c += texture2D(u_src, v_uv + u_dir * 1.3846153846).rgb * 0.3162162162;",
+    "  c += texture2D(u_src, v_uv - u_dir * 1.3846153846).rgb * 0.3162162162;",
+    "  c += texture2D(u_src, v_uv + u_dir * 3.2307692308).rgb * 0.0702702703;",
+    "  c += texture2D(u_src, v_uv - u_dir * 3.2307692308).rgb * 0.0702702703;",
+    "  gl_FragColor = vec4(c, 1.0);",
+    "}"
+  ].join("\n");
+  // composizione e color correction, nell'ordine: esposizione, compressione delle luci, saturazione, contrasto, split-toning, vignettatura, grana
+  var FRAG_FINAL = GLSL_COMMON + "\n" + [
+    "uniform sampler2D u_scene; uniform sampler2D u_b1; uniform sampler2D u_b2; uniform sampler2D u_b3;",
+    "uniform float u_dec; uniform vec3 u_w; uniform float u_tm; uniform float u_intro; uniform float u_t; uniform float u_loop; uniform vec2 u_res;",
+    "uniform vec3 u_sh; uniform vec3 u_hiA; uniform vec3 u_hiB; uniform float u_sat; uniform float u_con;",
+    "void main(){",
+    "  vec3 c = texture2D(u_scene, v_uv).rgb * u_dec;",
+    "  vec3 bloom = (texture2D(u_b1, v_uv).rgb * u_w.x + texture2D(u_b2, v_uv).rgb * u_w.y + texture2D(u_b3, v_uv).rgb * u_w.z) * u_dec;",
+    // apertura: l'immagine si espone dal nero mentre il glow si posa
+    "  float e = u_intro;",
+    "  c = (c + bloom * mix(2.4, 1.0, e)) * mix(0.0, 1.0, e);",
+    "  c = mix(c, 1.0 - exp(-c * 1.35), u_tm);",
+    "  c = clamp(c, 0.0, 1.0);",
+    "  float l = luma(c);",
+    "  c = mix(vec3(l), c, u_sat);",
+    "  c = mix(c, c * c * (3.0 - 2.0 * c), u_con);",
+    "  float drift = 0.5 - 0.5 * cos(6.2831853 * u_t / u_loop);",
+    "  c *= mix(u_sh, mix(u_hiA, u_hiB, drift), smoothstep(0.05, 0.85, l));",
+    "  c *= 1.0 - 0.42 * pow(length((v_uv - 0.5) * vec2(1.0, 0.72)), 2.2);",
+    "  c += (hash(v_uv * u_res + fract(u_t * 13.0)) - 0.5) / 160.0;",
+    "  gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);",
     "}"
   ].join("\n");
 
   function hexRGB(h) { return [parseInt(h.substr(1, 2), 16) / 255, parseInt(h.substr(3, 2), 16) / 255, parseInt(h.substr(5, 2), 16) / 255]; }
   function GLView(canvas, preserve) {
-    this.canvas = canvas; this.ok = false; this.texSrc = null;
+    this.canvas = canvas; this.ok = false; this.texSrc = null; this.tw = 0; this.th = 0;
     var gl = null;
-    try { gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: !!preserve, premultipliedAlpha: false }); } catch (e) {}
+    try { gl = canvas.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: !!preserve, premultipliedAlpha: false }); } catch (e) {}
     if (!gl) return;
-    function sh(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; }
-    var vs = sh(gl.VERTEX_SHADER, GL_VERT), fs = sh(gl.FRAGMENT_SHADER, GL_FRAG);
-    if (!vs || !fs) return;
-    var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
-    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
-    gl.useProgram(pr);
+    this.gl = gl;
+    // buffer in mezza precisione quando ci sono: il glow lavora oltre il bianco
+    this.hf = gl.getExtension("OES_texture_half_float");
+    gl.getExtension("OES_texture_half_float_linear"); gl.getExtension("EXT_color_buffer_half_float");
+    var self = this;
+    function prog(fragSrc, names) {
+      function sh(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; }
+      var vs = sh(gl.VERTEX_SHADER, GL_VERT), fs = sh(gl.FRAGMENT_SHADER, fragSrc);
+      if (!vs || !fs) return null;
+      var p = gl.createProgram(); gl.attachShader(p, vs); gl.attachShader(p, fs);
+      gl.bindAttribLocation(p, 0, "a"); gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
+      var u = {}; names.forEach(function (n) { u[n] = gl.getUniformLocation(p, "u_" + n); });
+      return { p: p, u: u };
+    }
+    this.ps = prog(FRAG_SCENE, ["res", "t", "loop", "mode", "seed", "enc", "bg", "a", "b", "hot", "tex", "hasTex", "horizon", "sun"]);
+    this.pb = prog(FRAG_BRIGHT, ["src", "texel", "dec", "enc", "thr"]);
+    this.pl = prog(FRAG_BLUR, ["src", "dir"]);
+    this.pf = prog(FRAG_FINAL, ["scene", "b1", "b2", "b3", "dec", "w", "tm", "intro", "t", "loop", "res", "sh", "hiA", "hiB", "sat", "con"]);
+    if (!this.ps || !this.pb || !this.pl || !this.pf) return;
     var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    var loc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    this.u = {};
-    var self = this;
-    ["res", "t", "loop", "wave", "center", "mode", "seed", "bg", "a", "b", "hot", "tex", "hasTex", "horizon"].forEach(function (n) { self.u[n] = gl.getUniformLocation(pr, "u_" + n); });
-    this.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.tex);
-    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(function (p) { gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE); });
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    this.gl = gl; this.ok = true;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    this.photo = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.photo); this.texParams();
+    this.ok = true;
   }
-  GLView.prototype.draw = function (o, t, wave, center) {
-    var gl = this.gl, c = this.canvas, U = this.u, mode = GL_SCENES[sceneOf(o)] || 0;
-    var col = GL_COLORS[o.pal] || GL_COLORS.nero;
-    gl.viewport(0, 0, c.width, c.height);
-    gl.uniform2f(U.res, c.width, c.height);
-    gl.uniform1f(U.t, ((t % LOOP) + LOOP) % LOOP); gl.uniform1f(U.loop, LOOP);
-    gl.uniform1f(U.wave, wave); gl.uniform2f(U.center, center ? center[0] : 0.5, center ? center[1] : 0.58);
-    gl.uniform1i(U.mode, mode); gl.uniform1f(U.seed, (o.seed % 997) / 97);
-    gl.uniform3fv(U.bg, hexRGB(col[0])); gl.uniform3fv(U.a, hexRGB(col[1])); gl.uniform3fv(U.b, hexRGB(col[2])); gl.uniform3fv(U.hot, hexRGB(col[3]));
-    var src = photoOf(o), rec = src && imgCache[src];
-    if (mode === 2 && rec && rec.ok && this.texSrc !== src) {
-      gl.bindTexture(gl.TEXTURE_2D, this.tex);
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, rec.img);
-      this.texSrc = src;
+  GLView.prototype.texParams = function () {
+    var gl = this.gl;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  };
+  GLView.prototype.target = function (w, h) {
+    var gl = this.gl, t = { w: w, h: h, tex: gl.createTexture(), fb: gl.createFramebuffer() };
+    gl.bindTexture(gl.TEXTURE_2D, t.tex); this.texParams();
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, this.hf ? this.hf.HALF_FLOAT_OES : gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, t.fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t.tex, 0);
+    var okFb = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return okFb ? t : null;
+  };
+  GLView.prototype.ensureTargets = function () {
+    var w = this.canvas.width, h = this.canvas.height;
+    if (this.tw === w && this.th === h) return true;
+    var self = this, q = function (d) { return [Math.max(1, Math.round(w / d)), Math.max(1, Math.round(h / d))]; };
+    function build() {
+      var s4 = q(4), s8 = q(8);
+      self.T = { scene: self.target(w, h), a1: self.target(s4[0], s4[1]), b1: self.target(s4[0], s4[1]), s1: self.target(s4[0], s4[1]), a2: self.target(s8[0], s8[1]), b2: self.target(s8[0], s8[1]) };
+      return Object.keys(self.T).every(function (k) { return self.T[k]; });
     }
-    gl.uniform1i(U.tex, 0);
-    gl.uniform1f(U.hasTex, mode === 2 && this.texSrc === src ? 1 : 0);
-    gl.uniform1f(U.horizon, HORIZON[src] || 0.4);
+    // senza buffer in mezza precisione si ripiega su 8 bit, con margine sopra il bianco
+    if (!build()) { this.hf = null; if (!build()) { this.ok = false; return false; } }
+    this.enc = this.hf ? 1 : 0.5;
+    this.tw = w; this.th = h;
+    return true;
+  };
+  GLView.prototype.pass = function (P, target) {
+    var gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.fb : null);
+    gl.viewport(0, 0, target ? target.w : this.canvas.width, target ? target.h : this.canvas.height);
+    gl.useProgram(P.p);
+  };
+  GLView.prototype.bind = function (unit, tex) { var gl = this.gl; gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); };
+  GLView.prototype.blur = function (src, dst, dx, dy) {
+    var gl = this.gl, P = this.pl;
+    this.pass(P, dst); this.bind(0, src.tex);
+    gl.uniform1i(P.u.src, 0); gl.uniform2f(P.u.dir, dx / src.w, dy / src.h);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   };
+  // intro: 0 = nero, 1 = immagine piena
+  GLView.prototype.draw = function (o, t, intro) {
+    if (!this.ok || !this.ensureTargets()) return;
+    var gl = this.gl, T = this.T, mode = GL_SCENES[sceneOf(o)] || 0, cfg = GLOW[mode];
+    var col = GL_COLORS[o.pal] || GL_COLORS.nero, gr = GRADES[o.pal] || GRADES.nero;
+    var tt = ((t % GL_LOOP) + GL_LOOP) % GL_LOOP, P, u;
+    // 1. scena
+    P = this.ps; u = P.u; this.pass(P, T.scene);
+    var src = photoOf(o), rec = src && imgCache[src];
+    if (mode >= 2 && rec && rec.ok && this.texSrc !== src) {
+      this.bind(0, this.photo);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, rec.img);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      this.texSrc = src;
+    }
+    this.bind(0, this.photo);
+    gl.uniform1i(u.tex, 0);
+    gl.uniform1f(u.hasTex, mode >= 2 && this.texSrc === src ? 1 : 0);
+    gl.uniform2f(u.res, this.canvas.width, this.canvas.height);
+    gl.uniform1f(u.t, tt); gl.uniform1f(u.loop, GL_LOOP);
+    gl.uniform1i(u.mode, mode); gl.uniform1f(u.seed, (o.seed % 997) / 97); gl.uniform1f(u.enc, this.enc);
+    gl.uniform3fv(u.bg, hexRGB(col[0])); gl.uniform3fv(u.a, hexRGB(col[1])); gl.uniform3fv(u.b, hexRGB(col[2])); gl.uniform3fv(u.hot, hexRGB(col[3]));
+    gl.uniform1f(u.horizon, HORIZON[src] || 0);
+    var sun = rec && rec.sun ? rec.sun : [0.5, 0.65];
+    gl.uniform2f(u.sun, sun[0], sun[1]);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // 2. luci forti, un quarto della risoluzione
+    P = this.pb; this.pass(P, T.a1); this.bind(0, T.scene.tex);
+    gl.uniform1i(P.u.src, 0); gl.uniform2f(P.u.texel, 1 / T.scene.w, 1 / T.scene.h);
+    gl.uniform1f(P.u.dec, 1 / this.enc); gl.uniform1f(P.u.enc, this.enc); gl.uniform1f(P.u.thr, cfg.thr);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // 3. glow stretto: due passate di sfocatura
+    this.blur(T.a1, T.b1, 1, 0); this.blur(T.b1, T.a1, 0, 1);
+    this.blur(T.a1, T.b1, 2, 0); this.blur(T.b1, T.a1, 0, 2);
+    // 4. glow largo a un ottavo
+    this.blur(T.a1, T.a2, 1.5, 0); this.blur(T.a2, T.b2, 0, 1.5);
+    this.blur(T.b2, T.a2, 3, 0); this.blur(T.a2, T.b2, 0, 3);
+    // 5. scia anamorfica: solo in orizzontale
+    this.blur(T.a1, T.s1, 6, 0); this.blur(T.s1, T.b1, 14, 0);
+    // 6. composizione e color correction sullo schermo
+    P = this.pf; u = P.u; this.pass(P, null);
+    this.bind(0, T.scene.tex); this.bind(1, T.a1.tex); this.bind(2, T.b2.tex); this.bind(3, T.b1.tex);
+    gl.uniform1i(u.scene, 0); gl.uniform1i(u.b1, 1); gl.uniform1i(u.b2, 2); gl.uniform1i(u.b3, 3);
+    gl.uniform1f(u.dec, 1 / this.enc); gl.uniform3fv(u.w, cfg.w); gl.uniform1f(u.tm, cfg.tm);
+    gl.uniform1f(u.intro, intro == null ? 1 : intro); gl.uniform1f(u.t, tt); gl.uniform1f(u.loop, GL_LOOP);
+    gl.uniform2f(u.res, this.canvas.width, this.canvas.height);
+    gl.uniform3fv(u.sh, gr.sh); gl.uniform3fv(u.hiA, gr.hiA); gl.uniform3fv(u.hiB, gr.hiB); gl.uniform1f(u.sat, gr.sat); gl.uniform1f(u.con, gr.con);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  };
+  // dove sta il sole in una foto: il baricentro dei pixel più luminosi nella metà alta
+  function findSun(img) {
+    try {
+      var c = document.createElement("canvas"), w = 60, h = 130; c.width = w; c.height = h;
+      var g = c.getContext("2d"); g.drawImage(img, 0, 0, w, h);
+      var d = g.getImageData(0, 0, w, h).data, sx = 0, sy = 0, sw = 0;
+      for (var y = 0; y < h * 0.8; y++) for (var x = 0; x < w; x++) {
+        var i = (y * w + x) * 4, l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255, k = Math.pow(l, 8);
+        sx += x * k; sy += y * k; sw += k;
+      }
+      return sw ? [sx / sw / w, 1 - sy / sw / h] : [0.5, 0.65];
+    } catch (e) { return [0.5, 0.65]; }
+  }
+  // apertura premium: esposizione dal nero con curva morbida, nessun rimbalzo
+  function introCurve(s) { var x = clamp01(s / 1.6); return x * x * (3 - 2 * x) * (0.6 + 0.4 * x); }
   var exportGL = null;
   function getExportGL() {
     if (!exportGL) { var c = document.createElement("canvas"); c.width = 1170; c.height = 2532; exportGL = new GLView(c, true); }
     return exportGL;
   }
   function isGL(o) { return GL_SCENES.hasOwnProperty(sceneOf(o)); }
+  function loopOf(o) { return isGL(o) ? GL_LOOP : LOOP; }
   function renderGLScene(canvas, o, t) {
     var W = canvas.width, H = canvas.height, g = canvas.getContext("2d"), v = getExportGL();
     if (v.ok) {
-      v.draw(o, t, o.intro ? t : 99);
+      v.draw(o, t, o.intro ? introCurve(t) : 1);
       g.drawImage(v.canvas, 0, 0, W, H);
     } else {
       var col = GL_COLORS[o.pal] || GL_COLORS.nero;
@@ -1246,16 +1441,13 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
   var rotTimer = null, hintTimer = null, wakeLock = null, liveRaf = null, liveStart = 0, liveLast = 0;
   var reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  var liveGL = null, glScale = 0.75, waveStart = 0, waveCenter = [0.5, 0.58], textStart = 0, textDone = false, slowFrames = 0;
+  var liveGL = null, glScale = 1, introStart = 0, textDone = false, slowFrames = 0;
   function sizeLiveGL() {
     var c = $("fsGL");
     c.width = Math.round(1170 * glScale); c.height = Math.round(2532 * glScale);
   }
-  // accensione: l'onda parte dal centro e il testo rientra
-  function wake(x, y, withText) {
-    waveStart = performance.now(); waveCenter = [x, y];
-    if (withText) { textStart = waveStart; textDone = false; }
-  }
+  // riparte l'apertura: esposizione dal nero, glow che si posa, poi la frase
+  function restartIntro() { introStart = performance.now(); textDone = false; }
   function startLive() {
     var c = $("fsCanvas"), glc = $("fsGL"), useGL = isGL(currentWpOptions());
     glc.hidden = !useGL;
@@ -1264,29 +1456,29 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
       if (!liveGL.ok) { glc.hidden = true; useGL = false; }
     }
     liveStart = performance.now(); liveLast = 0; slowFrames = 0;
-    wake(0.5, 0.58, true);
+    restartIntro();
     cancelAnimationFrame(liveRaf);
     function frame(now) {
       liveRaf = requestAnimationFrame(frame);
       var o = currentWpOptions();
       if (isGL(o) && liveGL && liveGL.ok) {
-        // ogni fotogramma, alla frequenza dello schermo; se il telefono fatica, abbassa la risoluzione
+        // a ogni fotogramma dello schermo, in alta definizione; solo se il telefono fatica davvero scende un poco
         var dt = now - liveLast; liveLast = now;
-        if (dt > 24 && dt < 200) { if (++slowFrames > 20 && glScale > 0.4) { glScale -= 0.15; sizeLiveGL(); slowFrames = 0; } } else slowFrames = Math.max(0, slowFrames - 1);
-        var t = (now - liveStart) / 1000;
-        liveGL.draw(o, reduceMotion ? LOOP * 0.4 : t, reduceMotion ? 99 : (now - waveStart) / 1000, waveCenter);
+        if (dt > 26 && dt < 200) { if (++slowFrames > 45 && glScale > 0.75) { glScale -= 0.125; sizeLiveGL(); slowFrames = 0; } } else slowFrames = Math.max(0, slowFrames - 1);
+        var t = (now - liveStart) / 1000, it = (now - introStart) / 1000;
+        liveGL.draw(o, reduceMotion ? GL_LOOP * 0.4 : t, reduceMotion ? 1 : introCurve(it));
         if (!textDone) {
-          var g = c.getContext("2d"), tt = (now - textStart) / 1000;
+          var g = c.getContext("2d");
           g.clearRect(0, 0, c.width, c.height);
           o.intro = !reduceMotion;
-          drawSceneText(g, c.width, c.height, o, o.intro ? tt : LOOP * 0.4);
-          if (!o.intro || tt > 2.2) textDone = true;
+          drawSceneText(g, c.width, c.height, o, o.intro ? it : GL_LOOP * 0.4);
+          if (!o.intro || it > 2.6) textDone = true;
         }
         return;
       }
       if (now - liveLast < 33) return; // 30 fotogrammi al secondo bastano per le scene disegnate
       liveLast = now;
-      var o = currentWpOptions();
+      o = currentWpOptions();
       if (reduceMotion) { renderWallpaper(c, o); return; }
       o.intro = true;
       renderWallpaper(c, o, (now - liveStart) / 1000);
@@ -1298,7 +1490,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     $("fsImg").hidden = !still; $("fsCanvas").hidden = still;
     $("fsHint").textContent = still
       ? "Tieni premuto per salvare l'immagine, oppure aspetta che questo messaggio sparisca e fai uno screenshot."
-      : "Tocca lo schermo per lanciare un'onda d'urto. Per averla sul blocco schermo usa i video: trovi come più in basso, in Sfondi animati.";
+      : "Anteprima animata dal vivo. Per averla sul blocco schermo usa i video: trovi come più in basso, in Sfondi animati.";
     if (still) { $("fsGL").hidden = true; $("fsImg").src = typeof url === "string" ? url : $("wpCanvas").toDataURL("image/jpeg", 0.92); }
     else startLive();
     fs.hidden = false; fs.classList.remove("clean");
@@ -1307,7 +1499,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     clearInterval(rotTimer);
     if (sec && typeof url !== "string") rotTimer = setInterval(function () {
       newWp();
-      if (still) $("fsImg").src = $("wpCanvas").toDataURL("image/jpeg", 0.92); else { liveStart = performance.now(); wake(0.5, 0.58, true); }
+      if (still) $("fsImg").src = $("wpCanvas").toDataURL("image/jpeg", 0.92); else { liveStart = performance.now(); restartIntro(); }
     }, sec * 1000);
     try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { wakeLock = l; }, function () {}); } catch (e) {}
   }
@@ -1367,7 +1559,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
       var t0 = performance.now();
       (function step() {
         var t = (performance.now() - t0) / 1000;
-        if (t >= LOOP) { rec.stop(); return; }
+        if (t >= loopOf(o)) { rec.stop(); return; }
         renderWallpaper(c, o, t); requestAnimationFrame(step);
       })();
     });
@@ -1582,15 +1774,10 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
     $("btnSave").onclick = saveWp;
     $("btnVideo").hidden = inFrame;
     $("btnVideo").onclick = recordVideo;
-    // un tocco lancia un'onda d'urto da quel punto
-    $("fsCanvas").addEventListener("pointerdown", function (e) {
-      var r = this.getBoundingClientRect();
-      wake((e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height, false);
-      $("fs").classList.add("clean");
-    });
-    // riaccendendo lo schermo con l'app aperta a schermo intero, l'animazione riparte dall'onda
+    $("fsCanvas").addEventListener("click", function () { $("fs").classList.toggle("clean"); });
+    // riaccendendo lo schermo con l'app aperta a schermo intero, l'apertura riparte
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible" && !$("fs").hidden && !$("fsCanvas").hidden) wake(0.5, 0.58, true);
+      if (document.visibilityState === "visible" && !$("fs").hidden && !$("fsCanvas").hidden) restartIntro();
     });
     $("optAnim").checked = wpPrefs.anim !== false;
     $("optAnim").onchange = function () { wpPrefs.anim = this.checked; store.set("wp", wpPrefs); };
@@ -1634,6 +1821,7 @@ nav.tabs svg { width: 20px; height: 20px; stroke-width: 1.5; }
   var exportCanvas = null;
   window.EdgeApp = {
     QUOTES: QUOTES, CALM: CALM, PALETTES: PALETTES, STYLES: STYLES, LOOP: LOOP,
+    loopOf: function (o) { return loopOf(o); },
     ready: function (o) { return ensureAssets(o); },
     render: function (o, t) {
       if (!exportCanvas) { exportCanvas = document.createElement("canvas"); exportCanvas.width = 1170; exportCanvas.height = 2532; }

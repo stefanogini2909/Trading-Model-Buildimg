@@ -8,8 +8,6 @@ const { openApp } = require("./server");
 const APP = path.resolve(__dirname, "..");
 const OUT = path.join(APP, "wallpapers");
 const COUNT = parseInt(process.argv[2] || "24", 10);
-// atmosfere a rotazione; ogni tre sfondi uno è un grafico del mestiere
-const STYLES = ["casa", "spazio", "strada", "vetro", "casa", "spazio", "strada", "linea"];
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -20,11 +18,13 @@ const STYLES = ["casa", "spazio", "strada", "vetro", "casa", "spazio", "strada",
   for (let i = 0; i < COUNT; i++) {
     const data = await page.evaluate(async (i) => {
       const A = window.EdgeApp;
-      const styles = ["casa", "spazio", "strada", "vetro", "casa", "spazio", "strada", "linea"];
+      // atmosfere a rotazione, con il motion design WebGL in primo piano
+      const styles = ["energia", "tropici", "aurora", "spazio", "tropici", "energia", "casa", "aurora", "strada", "tropici", "vetro", "linea"];
       const style = styles[i % styles.length];
       const calm = i % 2 === 0;
       const o = {
-        seed: 1000 + i * 7919, style, pal: style === "linea" ? "nero" : ["nero", "bottiglia", "notte"][i % 3],
+        seed: style === "tropici" ? [0, 14, 28, 7, 21][Math.floor(i / 3) % 5] : 1000 + i * 7919,
+        style, pal: style === "linea" ? "nero" : ["nero", "notte", "bottiglia", "bordeaux"][i % 4],
         quote: calm ? A.CALM[(i * 5) % A.CALM.length] : A.QUOTES[(i * 7) % A.QUOTES.length],
         label: calm ? "Mente calma" : "Regola del mestiere", date: null, why: false, streak: false,
       };

@@ -13,9 +13,10 @@ Tutte le foto sono ritagliate a 1170×2532 per il telefono. Nessuna è dell'auto
 | pioggia-vetro.jpg | WordPress Photo Directory — https://pd.w.org/2024/06/85667a9763e32215.10445933-1152x2048.jpg | CC0 |
 | pioggia-auto-notte.jpg | WordPress Photo Directory — https://pd.w.org/2024/02/56765be7e3e5c0a84.16018509-1536x2048.jpg | CC0 |
 | pioggia-finestrino.jpg | WordPress Photo Directory — https://pd.w.org/2025/09/51568d3c6cec3db09.21033724-1536x2048.jpeg | CC0 |
-| tropici-tramonto.jpg | StockSnap, "Tropical Beach" — https://stocksnap.io (807SY1FTFT) | CC0 |
-| tropici-palme.jpg | StockSnap, "Tropical Beach" — https://stocksnap.io (MJT2YTIXHC) | CC0 |
-| tropici-nuvole.jpg | StockSnap, "Tropical Beach" — https://stocksnap.io (D30ICQH34P) | CC0 |
-| tropici-isola.jpg | WordPress Photo Directory — https://pd.w.org/2025/04/349680af61c764149.84152967-1152x2048.jpg | CC0 |
+| tropici-controluce.jpg | WordPress Photo Directory — https://pd.w.org/2025/06/145683e7eec333911.03130262-1152x2048.jpg | CC0 |
+| tropici-cielo-rosa.jpg | WordPress Photo Directory — https://pd.w.org/2026/06/4016a1fedb6d2f708.25610191-1365x2048.jpeg | CC0 |
+| tropici-crepuscolo.jpg | WordPress Photo Directory — https://pd.w.org/2026/04/67169e17b717db0b1.50744450-1536x2048.jpg | CC0 |
+| tropici-laguna.jpg | WordPress Photo Directory — https://pd.w.org/2023/05/667646af525cbbb64.14841306-1536x2048.jpg | CC0 |
+| tropici-viola.jpg | WordPress Photo Directory — https://pd.w.org/2022/06/40062b46f2b326492.78897832-1536x2048.jpg | CC0 |
 
 Flusso di energia, Aurora e Casa sotto la pioggia sono generati in codice dall'app.
