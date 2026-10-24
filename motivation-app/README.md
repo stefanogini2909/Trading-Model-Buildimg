@@ -11,7 +11,7 @@ Design: nero caldo, profondità data solo da stacchi di tono, un unico accento o
 | Sezione | A cosa serve |
 |---|---|
 | **Oggi** | "Ricordati chi sei": una tua frase d'identità al giorno, cosa vuoi dalla carriera e il tuo perché. Regola del giorno (cambia ogni giorno), stato di Borsa Italiana e New York, giorni di disciplina di fila, il tuo "perché", pulsante **Ho appena perso un trade** (respirazione guidata, pausa di 15 minuti, checklist anti-revenge). |
-| **Sfondi** | Genera sfondi 1170×2532 con atmosfere che calmano la mente: **Casa sotto la pioggia** (disegnata dall'app), **Pioggia sul vetro**, **Spazio** (foto NASA), **Auto sportive**, **Alterna**, più i grafici del mestiere (Grafico, Candele, Solo parole). Frasi tue, di **Mente calma** (non legate al trading) o di trading. 5 colori per l'accento (Nero e ottone, Verde bottiglia, Bordeaux, Notte, Pietra), con le tue frasi o le regole del mestiere, il tuo perché e la tua serie. **Pacchetto blocco schermo**: 10 o più sfondi con le tue frasi, da salvare tutti insieme nelle Foto. Schermo intero con cambio automatico ogni minuto, 15 minuti o ora (lo schermo resta acceso). |
+| **Sfondi** | Genera sfondi 1170×2532. Motion design in WebGL: **Flusso di energia** (fili luminosi che scorrono con impulsi), **Aurora** (veli di luce con raggi), **Tropici** (tramonti e palme con l'acqua che tremola e riflessi del sole). Atmosfere che calmano la mente: **Casa sotto la pioggia** (disegnata dall'app), **Pioggia sul vetro**, **Spazio** (foto NASA), **Auto sportive**, **Alterna**, più i grafici del mestiere (Grafico, Candele, Solo parole). Frasi tue, di **Mente calma** (non legate al trading) o di trading. 5 colori per l'accento (Nero e ottone, Verde bottiglia, Bordeaux, Notte, Pietra), con le tue frasi o le regole del mestiere, il tuo perché e la tua serie. **Pacchetto blocco schermo**: 10 o più sfondi con le tue frasi, da salvare tutti insieme nelle Foto. Schermo intero con cambio automatico ogni minuto, 15 minuti o ora (lo schermo resta acceso). |
 | **Rituale** | Checklist pre-mercato: se la completi, la giornata conta per la serie (si contano solo i giorni feriali). Diario breve "una cosa fatta bene oggi". |
 | **Chi sono** | Frasi d'identità ("Rispetto ogni stop, senza eccezioni.") e di carriera ("Voglio vivere del mio trading.") da toccare per sceglierle, o da scrivere tu; visione a 3 anni, obiettivo a 12 mesi, perché e regola d'oro. Si salva da solo. |
 
@@ -48,10 +48,12 @@ Nella cartella `wallpapers/` ci sono anche 24 sfondi pronti, con frasi di mente 
 
 ## Sfondi animati sul blocco schermo
 
+**Onda d'urto all'accensione.** Nelle scene WebGL (Flusso di energia, Aurora, Tropici) lo schermo si accende con un'onda d'urto che parte dal centro: deforma l'immagine, separa i colori sul bordo e accende la scena dal centro verso i bordi, poi la frase entra in dissolvenza. Nell'app a schermo intero gira a 60 fps sulla scheda grafica del telefono, riparte ogni volta che riaccendi lo schermo e ogni tocco lancia una nuova onda da quel punto. Se il telefono fatica, la risoluzione della scena si abbassa da sola per restare fluida.
+
 Ogni atmosfera è animata e si ripete ogni 8 secondi senza stacchi: pioggia che scorre e gocce che scivolano sul vetro, vapore dalla tazza, stelle che brillano e una stella cadente, un riflesso di luce sulle auto, zoom lento sulle foto. La frase entra in dissolvenza.
 
 - **Nell'app**: "Schermo intero" mostra l'animazione dal vivo (si può spegnere con "Animazione a schermo intero").
-- **Video pronti**: nella cartella `videos/` ci sono 6 MP4 da 8 secondi (1080×2338): casa sotto la pioggia, pioggia sul vetro, astronauta, stazione spaziale, GT-R, Ferrari.
+- **Video pronti**: nella cartella `videos/` ci sono 12 MP4 da 8 secondi a 60 fps (1080×2338), con l'onda d'urto all'inizio nelle scene WebGL: energia oro, energia blu, aurora, tropici al tramonto, palme, casa sotto la pioggia, pioggia sul vetro, astronauta, stazione spaziale, GT-R, Ferrari.
 - **Il tuo video**: dall'app installata, "Registra video di 8 secondi" crea un video con le tue frasi.
 - **Samsung**: Impostazioni → Sfondo e stile → Schermata di blocco → Galleria → scegli il video.
 - **Altri Android**: un'app per video come sfondo animato (per esempio Video Live Wallpaper).
@@ -63,7 +65,7 @@ Crediti delle foto in `photos/CREDITS.md`.
 
 ```bash
 node motivation-app/tools/genera-sfondi.js 24   # sfondi fissi e icone
-node motivation-app/tools/genera-video.js       # video animati (serve ffmpeg)
+node motivation-app/tools/genera-video.js       # video animati a 60 fps (serve ffmpeg)
 ```
 
 Usano Playwright e lo stesso motore grafico dell'app.

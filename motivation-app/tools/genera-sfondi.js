@@ -14,7 +14,7 @@ const STYLES = ["casa", "spazio", "strada", "vetro", "casa", "spazio", "strada",
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   for (const f of fs.readdirSync(OUT)) if (/^edge-\d+\.jpg$/.test(f)) fs.unlinkSync(path.join(OUT, f));
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const { page, server } = await openApp(browser, APP);
 
   for (let i = 0; i < COUNT; i++) {
