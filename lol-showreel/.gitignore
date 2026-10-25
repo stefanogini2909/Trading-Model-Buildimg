@@ -1,0 +1,4 @@
+tools/node_modules/
+out/*
+!out/lol-showreel.mp4
+!out/soundtrack.wav
